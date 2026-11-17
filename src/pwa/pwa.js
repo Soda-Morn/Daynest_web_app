@@ -56,12 +56,18 @@ async function register() {
     if (!worker) return
     worker.addEventListener('statechange', () => {
       // "installed" while another worker controls the page = an update.
-      if (worker.state === 'installed' && navigator.serviceWorker.controller) updateReady.value = true
+      if (worker.state === 'installed' && navigator.serviceWorker.controller) onUpdateReady()
     })
   }
-  if (registration.waiting && navigator.serviceWorker.controller) updateReady.value = true
+  if (registration.waiting && navigator.serviceWorker.controller) onUpdateReady()
   watch(registration.installing)
   registration.addEventListener('updatefound', () => watch(registration.installing))
+
+  // Leaving the app (switching apps, locking the phone) is a safe moment to
+  // update: the user comes back to the new version without noticing.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden' && updateReady.value) void autoApply()
+  })
 
   // Reload only for an update the user accepted — not when the very first
   // worker claims the page on a first visit.
@@ -75,6 +81,40 @@ async function register() {
   const check = () => registration?.update().catch(() => {})
   document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && check())
   setInterval(check, 60 * 60 * 1000)
+}
+
+/**
+ * Installed apps on phones are rarely fully closed, so a waiting update
+ * would otherwise never activate. Apply it automatically when it is safe:
+ *  - just after the app opened (the user hasn't started working yet), or
+ *  - when the app goes to the background,
+ * and only if nothing is being typed and every change is saved.
+ * Otherwise the "new version is ready → Reload" toast stays as before.
+ */
+const STARTUP_WINDOW_MS = 15_000
+const startedAt = Date.now()
+
+function onUpdateReady() {
+  updateReady.value = true
+  if (Date.now() - startedAt < STARTUP_WINDOW_MS || document.visibilityState === 'hidden') void autoApply()
+}
+
+function isEditing() {
+  const el = document.activeElement
+  return !!el && (el.tagName === 'TEXTAREA' || el.isContentEditable || (el.tagName === 'INPUT' && !['checkbox', 'radio', 'button'].includes(el.type)))
+}
+
+async function autoApply() {
+  if (updateRequested || isEditing()) return
+  try {
+    // Make sure every local change is written before the page reloads.
+    const { persistence } = await import('@/services/persistence')
+    await persistence.flush()
+    if (persistence.unsavedCount() > 0 || isEditing()) return
+  } catch {
+    return // unsure whether everything is saved: leave it to the toast
+  }
+  applyUpdate()
 }
 
 /** Activates the waiting version; the page reloads on controllerchange. */
