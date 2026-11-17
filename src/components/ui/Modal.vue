@@ -194,4 +194,8 @@ function onHandleUp() {
 .modal-enter-from, .modal-leave-to { opacity: 0; }
 .modal-enter-from .panel, .modal-leave-to .panel { transform: translateY(8px) scale(0.98); opacity: 0; }
 .mobile.modal-enter-from .panel, .mobile.modal-leave-to .panel { transform: translateY(100%); opacity: 1; }
+/* Phones: snappier sheet so tapping feels instant. */
+.mobile.modal-enter-active, .mobile.modal-leave-active { transition-duration: 150ms; }
+.mobile.modal-enter-active .panel { transition: transform 180ms var(--ease-out); }
+.mobile.modal-leave-active .panel { transition: transform 150ms var(--ease); }
 </style>

@@ -1,7 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ListTodo } from 'lucide-vue-next'
 import FilterBar from '@/components/task/FilterBar.vue'
 import GroupedTaskList from '@/components/task/GroupedTaskList.vue'
 import InlineAdd from '@/components/task/InlineAdd.vue'
@@ -75,7 +74,7 @@ const addDefaults = computed(() => ({ listId: listId.value }))
       <FilterBar v-model="filter" :hide-lists="!!listId" class="fb" />
       <InlineAdd :defaults="addDefaults" :placeholder="activeList ? `Add to ${activeList.name}` : 'Add a task'" class="ia" />
       <GroupedTaskList :groups="groups" :show-list="false" />
-      <EmptyState v-if="!matched.length" :icon="ListTodo" title="No tasks here" text="Add a task above, or change the filters." />
+      <EmptyState v-if="!matched.length" mood="sleepy" title="No tasks here" text="Add a task above, or change the filters." />
     </div>
   </div>
 </template>

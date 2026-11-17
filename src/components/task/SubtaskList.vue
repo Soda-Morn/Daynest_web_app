@@ -49,14 +49,18 @@ function remove(id) {
         :value="s.title"
         :aria-label="`Subtask: ${s.title}`"
         maxlength="200"
+        autocomplete="off"
+        data-1p-ignore
+        data-lpignore="true"
+        data-form-type="other"
         @change="rename(s.id, ($event.target).value)"
         @keydown.enter="($event.target).blur()"
       />
       <button type="button" class="icon-btn sm del" :aria-label="`Remove ${s.title}`" @click="remove(s.id)"><X /></button>
     </div>
-    <form class="add" @submit.prevent="add">
+    <form class="add" autocomplete="off" @submit.prevent="add">
       <Plus class="plus" aria-hidden="true" />
-      <input v-model="draft" class="sub-input" placeholder="Add subtask" aria-label="Add subtask" maxlength="200" />
+      <input v-model="draft" class="sub-input" type="text" placeholder="Add subtask" aria-label="Add subtask" maxlength="200" autocomplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" />
     </form>
   </div>
 </template>

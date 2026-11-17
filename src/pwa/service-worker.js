@@ -20,6 +20,7 @@ const VERSION = '__DAYNEST_VERSION__'
 const CACHE = `daynest-${VERSION}`
 const PRECACHE = __DAYNEST_PRECACHE__
 const SHELL = '/index.html'
+const NAV_TIMEOUT_MS = 2000
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -50,12 +51,24 @@ self.addEventListener('fetch', (event) => {
   if (req.mode === 'navigate') {
     event.respondWith(
       (async () => {
+        // Network first, but don't keep a slow mobile connection waiting:
+        // after NAV_TIMEOUT_MS use this version's precached shell instead
+        // (it always matches this version's precached assets). A newer
+        // deploy is still picked up by the normal update check.
+        const network = fetch(req)
+        const cachedShell = () => caches.match(SHELL, { cacheName: CACHE, ignoreVary: true })
+        const timeout = new Promise((resolve) => setTimeout(() => resolve('timeout'), NAV_TIMEOUT_MS))
         try {
-          // Not cached: the precached shell must stay matched to this
-          // version's precached assets, or an offline start could break.
-          return await fetch(req)
+          const first = await Promise.race([network, timeout])
+          if (first !== 'timeout') return first
+          const cached = await cachedShell()
+          if (cached) {
+            network.catch(() => {}) // finish quietly in the background
+            return cached
+          }
+          return await network
         } catch {
-          const cached = await caches.match(SHELL, { cacheName: CACHE, ignoreVary: true })
+          const cached = await cachedShell()
           return cached || new Response('Daynest is offline and has not been cached yet.', { status: 503, headers: { 'Content-Type': 'text/plain' } })
         }
       })(),

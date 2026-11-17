@@ -1,6 +1,5 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { CalendarCheck2 } from 'lucide-vue-next'
 import TaskItem from '@/components/task/TaskItem.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import { useTaskStore } from '@/stores/tasks'
@@ -73,7 +72,7 @@ function dayLabel(d) {
 <template>
   <div class="agenda page">
     <div class="page-inner">
-      <EmptyState v-if="!groups.length" :icon="CalendarCheck2" title="Nothing scheduled" text="Tasks with a date in the next weeks will appear here." />
+      <EmptyState v-if="!groups.length" mood="sleepy" title="Nothing scheduled" text="Tasks with a date in the next weeks will appear here." />
       <div class="rows">
         <template v-for="r in visible" :key="r.key">
           <h2 v-if="r.kind === 'group'" class="g-title">{{ r.label }}</h2>

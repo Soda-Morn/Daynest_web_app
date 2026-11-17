@@ -64,8 +64,8 @@ const active = computed(() => isFilterActive({ ...filter.value, query: query.val
       <FilterBar v-model="filter" class="fb" />
       <p v-if="active" class="count" aria-live="polite">{{ results.length }} result{{ results.length === 1 ? '' : 's' }}</p>
       <GroupedTaskList :groups="groups" />
-      <EmptyState v-if="active && !results.length" :icon="Search" title="No matches" text="Try a different word or remove a filter." />
-      <EmptyState v-if="!active" :icon="Search" title="Search your tasks" text="Titles, notes, subtasks, calendars and lists are all searchable." />
+      <EmptyState v-if="active && !results.length" mood="sad" title="No matches" text="Try a different word or remove a filter." />
+      <EmptyState v-if="!active" mood="curious" title="Search your tasks" text="Titles, notes, subtasks, calendars and lists are all searchable." />
     </div>
   </div>
 </template>

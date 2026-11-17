@@ -86,7 +86,7 @@ async function remove() {
     <form class="form" @submit.prevent="save">
       <label class="field">
         <span class="field-label">Name</span>
-        <input v-model="name" class="input" maxlength="60" required data-autofocus :aria-invalid="!!error" :placeholder="state?.kind === 'calendar' ? 'e.g. Side project' : 'e.g. Groceries'" />
+        <input v-model="name" class="input" type="text" maxlength="60" autocomplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" required data-autofocus :aria-invalid="!!error" :placeholder="state?.kind === 'calendar' ? 'e.g. Side project' : 'e.g. Groceries'" />
       </label>
       <p v-if="error" class="err" role="alert">{{ error }}</p>
       <div class="field">

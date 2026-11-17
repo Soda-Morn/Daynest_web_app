@@ -1,6 +1,5 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { CalendarRange } from 'lucide-vue-next'
 import GroupedTaskList from '@/components/task/GroupedTaskList.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import { useTaskStore } from '@/stores/tasks'
@@ -39,7 +38,7 @@ const count = computed(() => groups.value.reduce((n, g) => n + g.items.length, 0
     <div class="page-inner">
       <p class="sub">{{ count }} open task{{ count === 1 ? '' : 's' }} in the next {{ days }} days</p>
       <GroupedTaskList :groups="groups" :show-date="false" />
-      <EmptyState v-if="!count" :icon="CalendarRange" title="All clear ahead" text="Tasks with upcoming dates will show up here." />
+      <EmptyState v-if="!count" mood="happy" title="All clear ahead" text="Tasks with upcoming dates will show up here." />
       <div class="more">
         <button type="button" class="btn btn-secondary btn-sm" @click="days += 30">Look further ahead</button>
       </div>

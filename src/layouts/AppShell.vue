@@ -16,7 +16,8 @@ import { useReminders } from '@/composables/useReminders'
 import { useUiStore } from '@/stores/ui'
 
 // Dialogs that aren't needed for first paint are split out.
-const QuickAdd = defineAsyncComponent(() => import('@/components/task/QuickAdd.vue'))
+const loadQuickAdd = () => import('@/components/task/QuickAdd.vue')
+const QuickAdd = defineAsyncComponent(loadQuickAdd)
 const SettingsDialog = defineAsyncComponent(() => import('@/components/layout/SettingsDialog.vue'))
 const CollectionDialog = defineAsyncComponent(() => import('@/components/layout/CollectionDialog.vue'))
 
@@ -26,7 +27,13 @@ const topbar = ref(null)
 
 useShortcuts(() => topbar.value?.focusSearch())
 useReminders()
-onMounted(() => ui.startClock())
+onMounted(() => {
+  ui.startClock()
+  // Fetch the "new task" dialog once the app is idle, so the first tap on + is instant.
+  const preload = () => void loadQuickAdd().catch(() => {})
+  if ('requestIdleCallback' in window) window.requestIdleCallback(preload, { timeout: 3000 })
+  else setTimeout(preload, 1500)
+})
 onBeforeUnmount(() => ui.stopClock())
 
 /* ---- PWA: updates, connectivity, home-screen shortcut ---- */
@@ -64,7 +71,7 @@ watch(
       <div class="work">
         <main id="main" class="main" tabindex="-1">
           <RouterView v-slot="{ Component, route }">
-            <Transition name="page" mode="out-in">
+            <Transition name="page">
               <component :is="Component" :key="route.name" />
             </Transition>
           </RouterView>
@@ -89,7 +96,9 @@ watch(
 .main { flex: 1; min-width: 0; min-height: 0; outline: none; }
 .skip { position: absolute; left: -999px; top: 8px; z-index: 100; padding: 8px 12px; border-radius: var(--radius-sm); background: var(--surface); box-shadow: var(--shadow); }
 .skip:focus { left: 8px; }
-.page-enter-active, .page-leave-active { transition: opacity 140ms var(--ease), transform 140ms var(--ease); }
+/* The new page appears at once and fades in; the old page is removed
+   immediately (hidden so it never pushes the new one down). */
+.page-enter-active { transition: opacity 140ms var(--ease), transform 140ms var(--ease); }
 .page-enter-from { opacity: 0; transform: translateY(4px); }
-.page-leave-to { opacity: 0; }
+.page-leave-active { display: none; }
 </style>

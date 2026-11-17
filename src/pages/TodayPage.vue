@@ -1,9 +1,10 @@
 <script setup>
 import { computed } from 'vue'
-import { ArrowRight, Flame, Sun } from 'lucide-vue-next'
+import { ArrowRight, Flame } from 'lucide-vue-next'
 import TaskItem from '@/components/task/TaskItem.vue'
 import InlineAdd from '@/components/task/InlineAdd.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import SunnyMascot from '@/components/brand/SunnyMascot.vue'
 import { MOTIVATION } from '@/constants'
 import { useTaskStore } from '@/stores/tasks'
 import { useUiStore } from '@/stores/ui'
@@ -50,6 +51,16 @@ function moveOverdueToToday() {
   toast.undoable(`Moved ${snap.size} task${snap.size === 1 ? '' : 's'} to today`, () => store.restore(snap))
 }
 
+/** Sunny follows the day: cheers when all is done, dozes late at night. */
+const allDone = computed(() => total.value > 0 && completed.value === total.value)
+const sunnyMood = computed(() => {
+  const h = ui.now.getHours()
+  if (allDone.value) return 'happy'
+  if (h >= 22 || h < 5) return 'sleepy'
+  if (overdue.value.length) return 'curious'
+  return 'idle'
+})
+
 const addDefaults = computed(() => ({ startDate: ui.today }))
 const maxBar = computed(() => Math.max(1, ...stats.week.value.counts))
 </script>
@@ -63,6 +74,7 @@ const maxBar = computed(() => Math.max(1, ...stats.week.value.counts))
           <h1 class="greet display">{{ greeting }}.</h1>
           <p class="motto">{{ motivation }}</p>
         </div>
+        <div class="head-sunny" :title="allDone ? 'All done — Sunny is proud of you!' : 'Hi, I’m Sunny!'"><SunnyMascot :mood="sunnyMood" /></div>
         <div class="progress">
           <p class="p-text"><strong>{{ completed }}</strong> of {{ total }} done</p>
           <div
@@ -114,7 +126,16 @@ const maxBar = computed(() => Math.max(1, ...stats.week.value.counts))
             @nudge="(d) => nudge(i.key, d)"
           />
         </TransitionGroup>
-        <EmptyState v-if="!todayItems.length" :icon="Sun" title="Your day is wide open" text="Add something you would like to get done today." />
+        <Transition name="cheer">
+          <div v-if="allDone" class="all-done" role="status">
+            <div class="ad-sunny"><SunnyMascot mood="happy" /></div>
+            <div>
+              <p class="ad-title">All done for today!</p>
+              <p class="ad-text">Every task is ticked off. Time to rest — Sunny is proud of you.</p>
+            </div>
+          </div>
+        </Transition>
+        <EmptyState v-if="!todayItems.length" mood="happy" title="Your day is wide open" text="Add something you would like to get done today." />
         <InlineAdd :defaults="addDefaults" placeholder="Add a task for today — try “Call mom at 6pm”" />
       </section>
 
@@ -153,6 +174,31 @@ const maxBar = computed(() => Math.max(1, ...stats.week.value.counts))
 .p-text strong { color: var(--text); font-weight: var(--weight-semibold); }
 .bar-track { height: 6px; border-radius: 3px; background: var(--surface-sunken); overflow: hidden; }
 .bar-fill { display: block; height: 100%; background: var(--primary); transform-origin: left; transition: transform var(--dur-slow) var(--ease-out); }
+.head-sunny { width: 78px; flex-shrink: 0; align-self: center; }
+
+/* "All done" card: still drawing + one-time pop (no running animation). */
+.all-done {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-2);
+  padding: var(--space-3) var(--space-5) var(--space-3) var(--space-3);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(120deg, color-mix(in srgb, var(--yellow) 22%, var(--surface)), color-mix(in srgb, var(--lavender) 55%, var(--surface)));
+  border: 1px solid color-mix(in srgb, var(--yellow) 35%, var(--border));
+}
+.ad-sunny { width: 72px; flex-shrink: 0; }
+.ad-title { font-weight: var(--weight-bold); font-size: var(--text-md); }
+.ad-text { font-size: var(--text-sm); color: var(--text-2); }
+.cheer-enter-active { animation: cheer-in 600ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+.cheer-enter-active .ad-sunny { animation: cheer-hop 700ms cubic-bezier(0.34, 1.56, 0.64, 1) 150ms both; }
+.cheer-leave-active { transition: opacity var(--dur) var(--ease); }
+.cheer-leave-to { opacity: 0; }
+@keyframes cheer-in { from { opacity: 0; transform: translateY(8px) scale(0.97); } to { opacity: 1; transform: none; } }
+@keyframes cheer-hop { 0% { transform: translateY(12px) scale(0.6); } 50% { transform: translateY(-8px) scale(1.06); } 100% { transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .cheer-enter-active, .cheer-enter-active .ad-sunny { animation: none; }
+}
 
 
 .block { display: grid; gap: var(--space-2); }
@@ -176,7 +222,9 @@ const maxBar = computed(() => Math.max(1, ...stats.week.value.counts))
 
 @media (max-width: 767px) {
   .today { gap: var(--space-6); }
-  .head { flex-direction: column; align-items: stretch; gap: var(--space-4); }
+  .head { position: relative; flex-direction: column; align-items: stretch; gap: var(--space-4); }
+  .head-sunny { position: absolute; top: 0; right: 0; width: 60px; }
+  .head-text { padding-right: 64px; }
   .progress { width: auto; }
   .p-text { text-align: left; }
   .greet { font-size: 1.75rem; }

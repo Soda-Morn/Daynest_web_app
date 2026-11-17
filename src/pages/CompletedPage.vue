@@ -1,6 +1,5 @@
 <script setup>
 import { computed } from 'vue'
-import { CircleCheckBig } from 'lucide-vue-next'
 import GroupedTaskList from '@/components/task/GroupedTaskList.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import { useTaskStore } from '@/stores/tasks'
@@ -52,7 +51,7 @@ const groups = computed(() => {
         <div><dt>All time</dt><dd>{{ completed.length }}</dd></div>
       </dl>
       <GroupedTaskList :groups="groups" />
-      <EmptyState v-if="!completed.length" :icon="CircleCheckBig" title="Nothing completed yet" text="Finished tasks collect here so you can look back on your progress." />
+      <EmptyState v-if="!completed.length" mood="look" title="Nothing completed yet" text="Finished tasks collect here so you can look back on your progress." />
     </div>
   </div>
 </template>

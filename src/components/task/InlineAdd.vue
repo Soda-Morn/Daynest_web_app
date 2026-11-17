@@ -39,9 +39,9 @@ function submit() {
 </script>
 
 <template>
-  <form class="inline-add" @submit.prevent="submit">
+  <form class="inline-add" autocomplete="off" @submit.prevent="submit">
     <Plus class="plus" aria-hidden="true" />
-    <input v-model="text" class="ia-input" :placeholder="placeholder" :aria-label="placeholder" maxlength="200" enterkeyhint="done" />
+    <input v-model="text" class="ia-input" type="text" :placeholder="placeholder" :aria-label="placeholder" maxlength="200" enterkeyhint="done" autocomplete="off" autocorrect="on" autocapitalize="sentences" data-1p-ignore data-lpignore="true" data-form-type="other" />
     <span v-if="preview" class="preview">{{ preview }}</span>
   </form>
 </template>

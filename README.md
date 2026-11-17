@@ -2,7 +2,26 @@
 
 **Make room for what matters.** A calm todo list and calendar planner: month, week, day and agenda views, Quick Add with natural language, recurring tasks, search, and an installable offline-first PWA. With Supabase configured it becomes a multi-user app with secure accounts and sync across devices.
 
-**Stack:** Vue 3 (`<script setup>`, plain JavaScript), Vite, Pinia, Vue Router, IndexedDB, Supabase (Auth, Postgres with RLS, Realtime, Storage), Lucide icons, Plus Jakarta Sans. No TypeScript, no CSS framework, no PWA framework.
+Live site: https://daynest-web-app.vercel.app
+
+## Technology used
+
+| Part | Tool | What it does |
+|---|---|---|
+| App | **Vue 3** + **JavaScript** | Builds the screens |
+| Build | **Vite** | Runs the app while coding and builds it for the web |
+| State | **Pinia** | Keeps tasks, lists and settings in one place |
+| Pages | **Vue Router** | Moves between pages and protects sign-in pages |
+| Style | **Plain CSS** | Colours, light and dark themes (no CSS framework) |
+| Font and icons | **Plus Jakarta Sans**, **Lucide** | Text and icons |
+| Data on device | **IndexedDB** | Saves tasks in the browser, so the app works offline |
+| Accounts | **Supabase Auth** | Sign up, sign in, reset password |
+| Database | **Supabase PostgreSQL** | Stores each user's data; Row Level Security keeps users apart |
+| Live sync | **Supabase Realtime** | Shows changes on your other devices right away |
+| Files | **Supabase Storage** | Profile pictures (private) |
+| Install and offline | **Service worker** + **manifest** (PWA) | Install on phone or computer and open without internet |
+| Tests | **Vitest**, **ESLint** | Check that the code works and is clean |
+| Hosting | **Vercel** + **GitHub** | Puts the app online; every push to `master` updates the site |
 
 ## Quick start
 

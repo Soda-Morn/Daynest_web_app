@@ -1,9 +1,12 @@
 <script setup>
-import { computed, onMounted, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { RotateCcw } from 'lucide-vue-next'
 import AppShell from '@/layouts/AppShell.vue'
-import AuthLayout from '@/layouts/AuthLayout.vue'
+
+// Sign-in pages (mascot, stickers, animations) load only when shown,
+// so people who are already signed in never download them.
+const AuthLayout = defineAsyncComponent(() => import('@/layouts/AuthLayout.vue'))
 import DaynestLogo from '@/components/brand/DaynestLogo.vue'
 import { APP_TAGLINE } from '@/constants/brand'
 import { useBootstrap } from '@/composables/useBootstrap'

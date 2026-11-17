@@ -98,7 +98,7 @@ const examples = [
 
 <template>
   <Modal :open="ui.quickAddOpen" title="New task" size="md" top hide-header @close="ui.closeQuickAdd()">
-    <form class="qa" @submit.prevent="save">
+    <form class="qa" autocomplete="off" @submit.prevent="save">
       <div class="input-wrap">
         <Sparkles class="lead" aria-hidden="true" />
         <input
@@ -108,8 +108,12 @@ const examples = [
           placeholder="What do you need to do?"
           aria-label="Task title — dates, times and #calendar are understood"
           autocomplete="off"
+          autocapitalize="sentences"
           enterkeyhint="done"
           maxlength="200"
+          data-1p-ignore
+          data-lpignore="true"
+          data-form-type="other"
           data-autofocus
         />
         <button type="button" class="icon-btn sm" aria-label="Close" @click="ui.closeQuickAdd()"><X /></button>
@@ -130,6 +134,10 @@ const examples = [
           placeholder="Add a description (optional)"
           aria-label="Description"
           maxlength="10000"
+          autocomplete="off"
+          data-1p-ignore
+          data-lpignore="true"
+          data-form-type="other"
           @input="autosize"
           @keydown="onDescKey"
         />

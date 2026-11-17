@@ -21,6 +21,7 @@ import TaskCheck from '@/components/ui/TaskCheck.vue'
 import DateMenu from './DateMenu.vue'
 import RecurrenceEditor from './RecurrenceEditor.vue'
 import SubtaskList from './SubtaskList.vue'
+import NotesEditor from './NotesEditor.vue'
 import { useUiStore } from '@/stores/ui'
 import { useTaskStore } from '@/stores/tasks'
 import { useCollectionsStore } from '@/stores/collections'
@@ -43,7 +44,6 @@ const toast = useToast()
 const inst = computed(() => (ui.detailKey ? store.resolveInstance(ui.detailKey) : null))
 const scope = ref('this')
 const title = ref('')
-const description = ref('')
 const titleEl = ref(null)
 
 // If the task disappears (deleted elsewhere, undo), close the panel.
@@ -59,13 +59,10 @@ watch(
     if (!i && ui.detailKey) ui.closeTask()
     if (!i) return
     if (!prev || prev.key !== i.key || document.activeElement !== titleEl.value) title.value = i.title
-    if (!prev || prev.key !== i.key || !descFocused) description.value = i.description
     void nextTick(autosize)
   },
   { immediate: true },
 )
-
-let descFocused = false
 
 function autosize() {
   const el = titleEl.value
@@ -109,9 +106,17 @@ function saveTitle() {
   if (t !== inst.value.title) apply({ title: t })
 }
 
-function saveDescription() {
-  descFocused = false
-  if (inst.value && description.value !== inst.value.description) apply({ description: description.value })
+/**
+ * Saves notes for the task they were typed in. The editor may flush after the
+ * panel already switched task or closed, so the key decides the target.
+ */
+function saveDescription(text, key) {
+  if (key === ui.detailKey && inst.value) {
+    if (text !== inst.value.description) apply({ description: text })
+    return
+  }
+  const target = store.resolveInstance(key)
+  if (target && target.description !== text) store.updateInstance(target, { description: text }, 'this')
 }
 
 function setDate(d) {
@@ -198,6 +203,10 @@ function onPanelKey(e) {
             rows="1"
             maxlength="200"
             aria-label="Title"
+            autocomplete="off"
+            data-1p-ignore
+            data-lpignore="true"
+            data-form-type="other"
             @input="autosize"
             @blur="saveTitle"
             @keydown.enter.prevent="($event.target).blur()"
@@ -321,15 +330,7 @@ function onPanelKey(e) {
 
           <section class="block">
             <h3 class="section-title"><AlignLeft class="ico" />Notes</h3>
-            <textarea
-              v-model="description"
-              class="textarea notes"
-              placeholder="Add notes, links or details…"
-              aria-label="Notes"
-              maxlength="10000"
-              @focus="descFocused = true"
-              @blur="saveDescription"
-            />
+            <NotesEditor :model-value="inst.description" :task-key="inst.key" @save="saveDescription" />
           </section>
 
           <p class="stamps">Created {{ created }} · Updated {{ updated }}</p>
@@ -401,7 +402,6 @@ dd { margin: 0; min-width: 0; }
 .add-rem { width: auto; flex: 1; min-width: 160px; }
 .block { margin-top: var(--space-5); display: grid; gap: var(--space-2); }
 .block .section-title { display: flex; align-items: center; gap: 6px; }
-.notes { min-height: 110px; }
 .stamps { margin-top: var(--space-5); font-size: var(--text-xs); color: var(--text-3); }
 
 </style>

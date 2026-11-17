@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import EventChip from './EventChip.vue'
 import DayListModal from './DayListModal.vue'
+import SunnyMascot from '@/components/brand/SunnyMascot.vue'
 import { useTaskStore } from '@/stores/tasks'
 import { useCollectionsStore } from '@/stores/collections'
 import { useUiStore } from '@/stores/ui'
@@ -18,7 +19,7 @@ import { addDays, formatDate, isSameMonth, monthGrid, weekday, weekdayNames } fr
  * a coloured edge — multi-day tasks span across the days they cover.
  * Instances for the visible weeks are fetched once and laid out per week
  * row; the number of lanes adapts to the cell height ("+N" for overflow).
- * Works on phones too: tap a day to see its tasks in a sheet.
+ * Click or tap a day to see its tasks in a popup (with a quick add).
  */
 const emit = defineEmits(['openDay'])
 const store = useTaskStore()
@@ -67,11 +68,10 @@ const rows = computed(() =>
 
 const dayModal = shallowRef(null)
 
-/** Desktop: click a day to add a task there. Phone: open the day's sheet. */
+/** Click (or tap) a day: show that day's tasks, with a way to add one. */
 function activateDay(d) {
   ui.selectedDate = d
-  if (isMobile.value) dayModal.value = d
-  else ui.openQuickAdd({ startDate: d })
+  dayModal.value = d
 }
 
 function onCellClick(d, e) {
@@ -90,9 +90,9 @@ function onCellKey(d, e) {
   }
 }
 
-function onNumClick(d) {
-  if (isMobile.value) activateDay(d)
-  else emit('openDay', d)
+function openDayView(d) {
+  dayModal.value = null
+  emit('openDay', d)
 }
 
 /* Phone: swipe left/right to change month. */
@@ -143,9 +143,11 @@ const fullLabel = (d) => formatDate(d, { weekday: 'long', month: 'long', day: 'n
               @click="onCellClick(d, $event)"
               @keydown="onCellKey(d, $event)"
             >
-              <button type="button" class="num" :aria-label="`Open ${fullLabel(d)}`" tabindex="-1" @click.stop="onNumClick(d)">
+              <button type="button" class="num" :aria-label="`Show tasks for ${fullLabel(d)}`" tabindex="-1" @click.stop="activateDay(d)">
                 {{ +d.slice(8) }}
               </button>
+              <!-- Sunny marks today (one still drawing, no animation). -->
+              <span v-if="d === ui.today" class="today-sunny" title="Today"><SunnyMascot no-nest /></span>
             </div>
             <div
               v-for="seg in row.layout.segments"
@@ -175,7 +177,7 @@ const fullLabel = (d) => formatDate(d, { weekday: 'long', month: 'long', day: 'n
         </div>
       </Transition>
     </div>
-    <DayListModal :date="dayModal" @close="dayModal = null" />
+    <DayListModal :date="dayModal" @close="dayModal = null" @open-day="openDayView" />
   </div>
 </template>
 
@@ -221,6 +223,9 @@ const fullLabel = (d) => formatDate(d, { weekday: 'long', month: 'long', day: 'n
 .out .num { opacity: 0.4; }
 .selected .num { background: var(--primary-soft); }
 .today .num { background: var(--primary); color: var(--primary-contrast); font-weight: var(--weight-semibold); opacity: 1; }
+/* Peeks out just to the right of today's number. */
+.today-sunny { position: absolute; top: 1px; left: calc(50% + 15px); width: 26px; pointer-events: none; }
+.phone .today-sunny { width: 16px; top: -1px; left: calc(50% + 10px); }
 .seg { position: absolute; height: 20px; z-index: 1; transition: opacity var(--dur) var(--ease); }
 .seg.ghosted { opacity: 0.35; }
 .more {
