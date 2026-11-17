@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "daynest", "runtimeExecutable": "npm", "runtimeArgs": ["--prefix", "D:/bloom-planner", "run", "dev"], "port": 5181 }
+  ]
+}

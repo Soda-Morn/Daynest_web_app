@@ -1,0 +1,214 @@
+/* ==========================================================================
+   Daynest design tokens — the single source of truth for colour, type,
+   space, radius, shadow and motion. Components only reference these.
+   Do not add colours outside this file.
+
+   Brand palette — Lavender & Cream
+     Soft Cream      #F7F4FA  main background
+     Light Lavender  #E8DFF2  secondary backgrounds, selected states
+     Muted Lilac     #B9A3D1  soft accents
+     Soft Purple     #8B72A8  primary buttons, active states
+     Deep Plum       #443750  main text and headings
+     White           #FFFFFF  cards and surfaces
+   Semantic
+     Success #8BAF91 · Warning #E6C477 · Error #D68C91 · Info #91B5D3
+   Semantic colours are light; for *text* they are deepened with Deep Plum
+   (color-mix) so small labels keep readable contrast.
+   ========================================================================== */
+
+:root {
+  /* Raw brand colours (theme-independent) */
+  --cream: #f7f4fa;
+  --lavender: #e8dff2;
+  --lilac: #b9a3d1;
+  --purple: #8b72a8;
+  --purple-strong: color-mix(in srgb, var(--purple) 78%, var(--plum));
+  --plum: #443750;
+  --white: #ffffff;
+  --green: #8baf91;
+  --yellow: #e6c477;
+  --rose: #d68c91;
+  --blue: #91b5d3;
+
+  /* Typography: Plus Jakarta Sans only, with system fallbacks */
+  --font-sans: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-display: var(--font-sans);
+  --text-xs: 0.75rem;   /* 12 */
+  --text-sm: 0.8125rem; /* 13 */
+  --text-base: 0.875rem;/* 14 */
+  --text-md: 0.9375rem; /* 15 */
+  --text-lg: 1.0625rem; /* 17 */
+  --text-xl: 1.25rem;   /* 20 */
+  --text-2xl: 1.5rem;   /* 24 */
+  --text-3xl: 1.875rem; /* 30 */
+  --weight-regular: 400;  /* body text */
+  --weight-medium: 500;   /* secondary labels, calendar dates */
+  --weight-semibold: 600; /* section headings, buttons, navigation */
+  --weight-bold: 700;     /* page titles, main headings */
+  --leading-tight: 1.25;
+  --leading: 1.55;
+
+  /* Spacing (4px scale) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* Radius */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-full: 999px;
+
+  /* Icons */
+  --icon-sm: 14px;
+  --icon: 16px;
+  --icon-lg: 20px;
+
+  /* Layout */
+  --sidebar-width: 264px;
+  --sidebar-collapsed: 68px;
+  --topbar-height: 64px;
+  --bottom-nav-height: 64px;
+  --tap: 44px;
+
+  /* Motion */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 120ms;
+  --dur: 200ms;
+  --dur-slow: 300ms;
+}
+
+/* ---------- Light: cream, lavender and white ---------- */
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+  --bg: var(--cream);
+  --bg-sidebar: color-mix(in srgb, var(--lavender) 55%, var(--cream));
+  --surface: var(--white);
+  --surface-2: color-mix(in srgb, var(--cream) 60%, var(--white));
+  --surface-sunken: color-mix(in srgb, var(--lavender) 45%, var(--cream));
+  --surface-hover: color-mix(in srgb, var(--lavender) 35%, var(--white));
+  --border: color-mix(in srgb, var(--lavender) 92%, var(--plum));
+  --border-strong: color-mix(in srgb, var(--lilac) 60%, var(--lavender));
+  --text: var(--plum);
+  --text-2: color-mix(in srgb, var(--plum) 78%, var(--cream));
+  --text-3: color-mix(in srgb, var(--plum) 79%, var(--cream));
+  --brand-ink: var(--plum);
+
+  /* Buttons and active fills use Soft Purple deepened with a touch of Deep
+     Plum (≈#7B6595) so white labels meet WCAG AA (4.5:1). The pure
+     #8B72A8 stays the brand colour for the logo, icons and accents. */
+  --primary: var(--purple-strong);
+  --primary-hover: color-mix(in srgb, var(--purple) 66%, var(--plum));
+  --primary-contrast: var(--white);
+  --primary-soft: var(--lavender);
+  --primary-text: color-mix(in srgb, var(--purple) 55%, var(--plum));
+  --secondary: var(--lilac);
+  --secondary-hover: color-mix(in srgb, var(--lilac) 85%, var(--purple));
+  --accent: var(--lilac);
+  --accent-soft: color-mix(in srgb, var(--lavender) 70%, var(--white));
+  --accent-text: color-mix(in srgb, var(--purple) 55%, var(--plum));
+
+  --success: var(--green);
+  --warning: var(--yellow);
+  --danger: var(--rose);
+  --info: var(--blue);
+  --success-text: color-mix(in srgb, var(--green) 45%, var(--plum));
+  --warning-text: color-mix(in srgb, var(--yellow) 32%, var(--plum));
+  --danger-text: color-mix(in srgb, var(--rose) 45%, var(--plum));
+  --info-text: color-mix(in srgb, var(--blue) 45%, var(--plum));
+
+  /* Priorities: soft, never alarming */
+  --prio-low: var(--lilac);
+  --prio-medium: var(--blue);
+  --prio-high: var(--yellow);
+  --prio-urgent: var(--rose);
+
+  --overdue: var(--danger-text);
+  --overdue-soft: color-mix(in srgb, var(--rose) 14%, var(--white));
+
+  --shadow-xs: 0 1px 1px rgba(68, 55, 80, 0.05);
+  --shadow-sm: 0 1px 2px rgba(68, 55, 80, 0.07), 0 1px 1px rgba(68, 55, 80, 0.03);
+  --shadow: 0 6px 18px -8px rgba(68, 55, 80, 0.2), 0 2px 4px rgba(68, 55, 80, 0.05);
+  --shadow-lg: 0 22px 48px -16px rgba(68, 55, 80, 0.3), 0 4px 12px rgba(68, 55, 80, 0.07);
+  --scrim: rgba(68, 55, 80, 0.32);
+  --chip-mix: 20%;
+  --chip-ink: var(--plum);
+  --chip-ink-mix: 55%;
+  --toast-bg: var(--plum);
+  --toast-text: var(--cream);
+  --toast-action: var(--lilac);
+}
+
+/* ---------- Dark: deep plum and dark purple surfaces ---------- */
+[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #18131d;
+  --bg-sidebar: #15111a;
+  --surface: #211a28;
+  --surface-2: #261e2e;
+  --surface-sunken: #1b1621;
+  --surface-hover: #2b2234;
+  --border: #33293d;
+  --border-strong: #44384f;
+  --text: #f0eaf6;
+  --text-2: color-mix(in srgb, var(--lavender) 80%, #18131d);
+  --text-3: color-mix(in srgb, var(--lilac) 82%, #18131d);
+  --brand-ink: var(--lavender);
+
+  --primary: var(--lilac);
+  --primary-hover: color-mix(in srgb, var(--lilac) 85%, var(--white));
+  --primary-contrast: #241b2e;
+  --primary-soft: color-mix(in srgb, var(--purple) 28%, #211a28);
+  --primary-text: var(--lilac);
+  --secondary: var(--purple);
+  --secondary-hover: color-mix(in srgb, var(--purple) 85%, var(--lilac));
+  --accent: var(--lilac);
+  --accent-soft: color-mix(in srgb, var(--purple) 22%, #211a28);
+  --accent-text: var(--lilac);
+
+  --success: var(--green);
+  --warning: var(--yellow);
+  --danger: var(--rose);
+  --info: var(--blue);
+  --success-text: var(--green);
+  --warning-text: var(--yellow);
+  --danger-text: var(--rose);
+  --info-text: var(--blue);
+
+  --prio-low: color-mix(in srgb, var(--lilac) 75%, #18131d);
+  --prio-medium: var(--blue);
+  --prio-high: var(--yellow);
+  --prio-urgent: var(--rose);
+
+  --overdue: var(--rose);
+  --overdue-soft: color-mix(in srgb, var(--rose) 14%, #211a28);
+
+  --shadow-xs: 0 1px 1px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow: 0 8px 22px -10px rgba(0, 0, 0, 0.6), 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 24px 56px -16px rgba(0, 0, 0, 0.75), 0 6px 14px rgba(0, 0, 0, 0.35);
+  --scrim: rgba(10, 6, 14, 0.6);
+  --chip-mix: 26%;
+  --chip-ink: var(--white);
+  --chip-ink-mix: 55%;
+  --toast-bg: var(--lavender);
+  --toast-text: var(--plum);
+  --toast-action: color-mix(in srgb, var(--purple) 60%, var(--plum));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur: 0ms;
+    --dur-slow: 0ms;
+  }
+}
