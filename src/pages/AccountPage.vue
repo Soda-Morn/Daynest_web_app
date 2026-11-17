@@ -86,7 +86,7 @@ const pwBusy = ref(false)
 const pwTouched = ref(false)
 const pwError = ref(null)
 const pwErrors = computed(() => ({
-  next: pwTouched.value && !checkPassword(next.value).ok ? 'Use at least 8 characters with letters and numbers.' : null,
+  next: pwTouched.value && !checkPassword(next.value).ok ? 'Use at least 6 characters.' : null,
   confirm: pwTouched.value && confirmPw.value !== next.value ? 'Passwords don’t match.' : null,
 }))
 async function changePassword() {

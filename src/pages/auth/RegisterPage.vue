@@ -19,7 +19,7 @@ const touched = ref(false)
 const errors = computed(() => ({
   name: name.value.trim().length > 80 ? 'Use 80 characters or fewer.' : null,
   email: touched.value ? validateEmail(email.value) : null,
-  password: touched.value && !checkPassword(password.value).ok ? 'Use at least 8 characters with letters and numbers.' : null,
+  password: touched.value && !checkPassword(password.value).ok ? 'Use at least 6 characters.' : null,
   confirm: touched.value && confirm.value !== password.value ? 'Passwords don’t match.' : null,
 }))
 

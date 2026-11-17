@@ -17,7 +17,7 @@ const touched = ref(false)
 // Only a session created by the reset link may set a password without the old one.
 const hasSession = computed(() => !!auth.user && auth.recovery)
 const errors = computed(() => ({
-  password: touched.value && !checkPassword(password.value).ok ? 'Use at least 8 characters with letters and numbers.' : null,
+  password: touched.value && !checkPassword(password.value).ok ? 'Use at least 6 characters.' : null,
   confirm: touched.value && confirm.value !== password.value ? 'Passwords don’t match.' : null,
 }))
 

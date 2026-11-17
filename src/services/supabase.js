@@ -61,7 +61,7 @@ export function friendlyError(e) {
   if (/Email not confirmed/i.test(msg)) return 'Please confirm your email first. Check your inbox for the link.'
   if (/User already registered/i.test(msg)) return 'An account with this email already exists. Try signing in.'
   if (/Password should|weak password|password.*characters/i.test(msg))
-    return 'Choose a stronger password: at least 8 characters with letters and numbers.'
+    return 'Choose a password with at least 6 characters.'
   if (/rate limit|too many/i.test(msg)) return 'Too many attempts. Please wait a minute and try again.'
   if (/same_password|different from the old/i.test(msg)) return 'Choose a password you haven’t used for this account.'
   if (err?.code === '42501' || /row-level security/i.test(msg)) return 'You don’t have permission to do that.'
