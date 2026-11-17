@@ -1,9 +1,11 @@
-<script setup lang="ts">
+<script setup>
 import { Check } from 'lucide-vue-next'
 import { PALETTE } from '@/constants'
 
-defineProps<{ modelValue: string }>()
-defineEmits<{ 'update:modelValue': [string] }>()
+defineProps({
+  modelValue: { type: String, required: true },
+})
+defineEmits(['update:modelValue'])
 </script>
 
 <template>

@@ -1,20 +1,18 @@
-<script setup lang="ts">
+<script setup>
 import { computed } from 'vue'
 import { Check, Flag, SlidersHorizontal, X } from 'lucide-vue-next'
 import Dropdown from '@/components/ui/Dropdown.vue'
 import { PRIORITIES } from '@/constants'
 import { useCollectionsStore } from '@/stores/collections'
-import type { Priority } from '@/types/models'
-import type { QuickFilter, TaskFilter } from '@/utils/filters'
-
-const props = withDefaults(defineProps<{ modelValue: TaskFilter; quick?: QuickFilter[]; hideLists?: boolean }>(), {
-  quick: () => ['all', 'today', 'upcoming', 'overdue', 'unscheduled', 'completed'],
-  hideLists: false,
+const props = defineProps({
+  modelValue: { type: Object, required: true },
+  quick: { type: Array, default: () => ['all', 'today', 'upcoming', 'overdue', 'unscheduled', 'completed'] },
+  hideLists: { type: Boolean, default: false },
 })
-const emit = defineEmits<{ 'update:modelValue': [TaskFilter] }>()
+const emit = defineEmits(['update:modelValue'])
 const collections = useCollectionsStore()
 
-const LABELS: Record<QuickFilter, string> = {
+const LABELS = {
   all: 'All',
   today: 'Today',
   upcoming: 'Upcoming',
@@ -23,14 +21,16 @@ const LABELS: Record<QuickFilter, string> = {
   completed: 'Completed',
 }
 
-const extraCount = computed(() => props.modelValue.priorities.length + props.modelValue.calendarIds.length + props.modelValue.listIds.length)
+const extraCount = computed(
+  () => props.modelValue.priorities.length + props.modelValue.calendarIds.length + props.modelValue.listIds.length,
+)
 
-function set(patch: Partial<TaskFilter>) {
+function set(patch) {
   emit('update:modelValue', { ...props.modelValue, ...patch })
 }
-function toggle<K extends 'priorities' | 'calendarIds' | 'listIds'>(key: K, value: TaskFilter[K][number]) {
-  const arr = props.modelValue[key] as string[]
-  set({ [key]: arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value] } as Partial<TaskFilter>)
+function toggle(key, value) {
+  const arr = props.modelValue[key]
+  set({ [key]: arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value] })
 }
 </script>
 
@@ -62,7 +62,7 @@ function toggle<K extends 'priorities' | 'calendarIds' | 'listIds'>(key: K, valu
         role="menuitemcheckbox"
         class="menu-item"
         :aria-checked="modelValue.priorities.includes(p.value)"
-        @click="toggle('priorities', p.value as Priority)"
+        @click="toggle('priorities', p.value)"
       >
         <Flag :class="`p-${p.value}`" />{{ p.label }}
         <Check v-if="modelValue.priorities.includes(p.value)" class="tick" />

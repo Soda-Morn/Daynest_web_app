@@ -2,3 +2,12 @@ node_modules
 dist
 *.local
 coverage
+
+# Secrets: never commit real keys
+.env
+.env.*
+!.env.example
+
+# Supabase CLI local state
+supabase/.temp
+supabase/.branches

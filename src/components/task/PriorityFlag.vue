@@ -1,9 +1,11 @@
-<script setup lang="ts">
+<script setup>
 import { Flag } from 'lucide-vue-next'
-import type { Priority } from '@/types/models'
 
-defineProps<{ priority: Priority; showLabel?: boolean }>()
-const LABEL: Record<Priority, string> = { low: 'Low', medium: 'Medium', high: 'High', urgent: 'Urgent' }
+defineProps({
+  priority: { type: String, required: true },
+  showLabel: { type: Boolean },
+})
+const LABEL = { low: 'Low', medium: 'Medium', high: 'High', urgent: 'Urgent' }
 </script>
 
 <template>

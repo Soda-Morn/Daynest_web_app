@@ -1,16 +1,18 @@
-<script setup lang="ts">
+<script setup>
 import { computed, ref, watch } from 'vue'
-import type { DateKey, RecurrenceFreq, RecurrenceRule } from '@/types/models'
 import { describeRecurrence } from '@/utils/recurrence'
 import { fromKey, weekday, weekdayNames } from '@/utils/date'
 
 /** Preset picker + custom editor (interval, unit, weekdays, end). */
-const props = defineProps<{ modelValue: RecurrenceRule | null; start: DateKey | null }>()
-const emit = defineEmits<{ 'update:modelValue': [RecurrenceRule | null] }>()
+const props = defineProps({
+  modelValue: { type: [Object, null], required: true },
+  start: { type: [String, null], required: true },
+})
+const emit = defineEmits(['update:modelValue'])
 
 const custom = ref(false)
-const draft = ref<RecurrenceRule>({ freq: 'weekly', interval: 1, byWeekday: [], until: null, count: null })
-const endMode = ref<'never' | 'until' | 'count'>('never')
+const draft = ref({ freq: 'weekly', interval: 1, byWeekday: [], until: null, count: null })
+const endMode = ref('never')
 
 watch(
   () => props.modelValue,
@@ -37,7 +39,7 @@ const presets = computed(() => {
     { id: 'monthly', label: `Every month on day ${day}`, rule: { freq: 'monthly', interval: 1 } },
     { id: 'monthlyLast', label: 'Every month on the last day', rule: { freq: 'monthly', interval: 1, lastDayOfMonth: true } },
     { id: 'yearly', label: 'Every year', rule: { freq: 'yearly', interval: 1 } },
-  ] as { id: string; label: string; rule: RecurrenceRule | null }[]
+  ]
 })
 
 const selectedPreset = computed(() => {
@@ -54,7 +56,7 @@ const selectedPreset = computed(() => {
   return 'custom'
 })
 
-function onPreset(id: string) {
+function onPreset(id) {
   if (id === 'custom') {
     custom.value = true
     if (!props.modelValue) draft.value = { freq: 'weekly', interval: 1, byWeekday: [wd.value], until: null, count: null }
@@ -64,7 +66,7 @@ function onPreset(id: string) {
   emit('update:modelValue', presets.value.find((p) => p.id === id)?.rule ?? null)
 }
 
-function toggleDay(d: number) {
+function toggleDay(d) {
   const set = new Set(draft.value.byWeekday ?? [])
   if (set.has(d)) set.delete(d)
   else set.add(d)
@@ -72,7 +74,7 @@ function toggleDay(d: number) {
 }
 
 function applyCustom() {
-  const r: RecurrenceRule = {
+  const r = {
     freq: draft.value.freq,
     interval: Math.max(1, Math.min(999, Math.floor(draft.value.interval || 1))),
     byWeekday: draft.value.freq === 'weekly' && draft.value.byWeekday?.length ? draft.value.byWeekday : undefined,
@@ -83,7 +85,7 @@ function applyCustom() {
   custom.value = false
 }
 
-const UNITS: { value: RecurrenceFreq; label: string }[] = [
+const UNITS = [
   { value: 'daily', label: 'day(s)' },
   { value: 'weekly', label: 'week(s)' },
   { value: 'monthly', label: 'month(s)' },
@@ -93,7 +95,7 @@ const UNITS: { value: RecurrenceFreq; label: string }[] = [
 
 <template>
   <div class="rec">
-    <select class="select" :value="custom ? 'custom' : selectedPreset" :disabled="!start" aria-label="Repeat" @change="onPreset(($event.target as HTMLSelectElement).value)">
+    <select class="select" :value="custom ? 'custom' : selectedPreset" :disabled="!start" aria-label="Repeat" @change="onPreset(($event.target).value)">
       <option v-for="p in presets" :key="p.id" :value="p.id">{{ p.label }}</option>
       <option value="custom">{{ selectedPreset === 'custom' && modelValue && !custom ? describeRecurrence(modelValue, start) : 'Custom…' }}</option>
     </select>

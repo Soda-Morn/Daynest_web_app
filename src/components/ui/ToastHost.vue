@@ -1,10 +1,10 @@
-<script setup lang="ts">
+<script setup>
 import { X } from 'lucide-vue-next'
-import { useToast, type Toast } from '@/composables/useToast'
+import { useToast } from '@/composables/useToast'
 
 const { toasts, dismiss } = useToast()
 
-function runAction(t: Toast) {
+function runAction(t) {
   t.action?.run()
   dismiss(t.id)
 }

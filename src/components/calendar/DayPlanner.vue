@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { computed } from 'vue'
 import WeekStrip from './WeekStrip.vue'
 import TimeGridView from './TimeGridView.vue'

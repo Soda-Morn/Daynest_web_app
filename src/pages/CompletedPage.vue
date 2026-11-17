@@ -1,10 +1,8 @@
-<script setup lang="ts">
+<script setup>
 import { computed } from 'vue'
 import { CircleCheckBig } from 'lucide-vue-next'
 import GroupedTaskList from '@/components/task/GroupedTaskList.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
-import type { TaskInstance } from '@/types/models'
-import type { TaskGroup } from '@/types/ui'
 import { useTaskStore } from '@/stores/tasks'
 import { useUiStore } from '@/stores/ui'
 import { useStats } from '@/composables/useStats'
@@ -17,7 +15,7 @@ const ui = useUiStore()
 const stats = useStats()
 
 const completed = computed(() => {
-  const out: TaskInstance[] = []
+  const out = []
   for (const t of store.byId.values()) {
     if (!t.recurrence) {
       if (t.status === 'completed') out.push(oneOffInstance(t))
@@ -28,8 +26,8 @@ const completed = computed(() => {
   return out.sort((a, b) => ((b.completedAt ?? '') > (a.completedAt ?? '') ? 1 : -1))
 })
 
-const groups = computed<TaskGroup[]>(() => {
-  const map = new Map<string, TaskInstance[]>()
+const groups = computed(() => {
+  const map = new Map()
   for (const i of completed.value) {
     const k = i.completedAt ? toKey(new Date(i.completedAt)) : 'unknown'
     const arr = map.get(k) ?? []

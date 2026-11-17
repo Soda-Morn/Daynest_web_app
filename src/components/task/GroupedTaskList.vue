@@ -1,7 +1,5 @@
-<script setup lang="ts">
+<script setup>
 import { computed } from 'vue'
-import type { TaskInstance } from '@/types/models'
-import type { TaskGroup } from '@/types/ui'
 import TaskItem from './TaskItem.vue'
 import { useIncremental } from '@/composables/useIncremental'
 
@@ -9,16 +7,15 @@ import { useIncremental } from '@/composables/useIncremental'
  * Renders grouped tasks as one flat, incrementally-rendered list so that
  * thousands of tasks never produce thousands of DOM nodes at once.
  */
-const props = withDefaults(defineProps<{ groups: TaskGroup[]; showDate?: boolean; showList?: boolean; pageSize?: number }>(), {
-  showDate: true,
-  showList: true,
-  pageSize: 80,
+const props = defineProps({
+  groups: { type: Array, required: true },
+  showDate: { type: Boolean, default: true },
+  showList: { type: Boolean, default: true },
+  pageSize: { type: Number, default: 80 },
 })
 
-type Row = { kind: 'head'; key: string; label: string; count: number; tone: string } | { kind: 'item'; key: string; inst: TaskInstance }
-
-const rows = computed<Row[]>(() => {
-  const out: Row[] = []
+const rows = computed(() => {
+  const out = []
   for (const g of props.groups) {
     if (!g.items.length) continue
     if (g.label) out.push({ kind: 'head', key: 'g:' + g.id, label: g.label, count: g.items.length, tone: g.tone ?? 'default' })
@@ -28,7 +25,7 @@ const rows = computed<Row[]>(() => {
 })
 
 const { visible, hasMore, sentinel, more, total } = useIncremental(rows, props.pageSize)
-const setSentinel = (el: unknown) => (sentinel.value = (el as HTMLElement | null) ?? null)
+const setSentinel = (el) => (sentinel.value = el ?? null)
 </script>
 
 <template>

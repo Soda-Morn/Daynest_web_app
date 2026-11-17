@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { computed } from 'vue'
 import { ArrowRight, Flame, Sun } from 'lucide-vue-next'
 import TaskItem from '@/components/task/TaskItem.vue'
@@ -13,7 +13,6 @@ import { useReorder } from '@/composables/useReorder'
 import { useToast } from '@/composables/useToast'
 import { formatDate } from '@/utils/date'
 import { compareByOrder } from '@/utils/task'
-import type { TaskSnapshot } from '@/stores/tasks'
 
 const store = useTaskStore()
 const ui = useUiStore()
@@ -43,7 +42,7 @@ const completed = computed(() => todayItems.value.filter((i) => i.status === 'co
 const { ordered, dragKey, grab, nudge } = useReorder(todayItems, (list) => store.reorder(list))
 
 function moveOverdueToToday() {
-  const snap: TaskSnapshot = new Map()
+  const snap = new Map()
   for (const i of overdue.value) {
     const s = store.moveInstance(i, ui.today)
     for (const [k, v] of s) if (!snap.has(k)) snap.set(k, v)

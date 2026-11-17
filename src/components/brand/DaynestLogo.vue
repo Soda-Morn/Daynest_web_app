@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { APP_NAME } from '@/constants/brand'
 
 /**
@@ -6,7 +6,10 @@ import { APP_NAME } from '@/constants/brand'
  * The tile colours are fixed brand colours (Soft Purple, Soft Cream, Muted Lilac, Warm Yellow) so the mark looks identical to the
  * favicon and installed app icon in both themes.
  */
-withDefaults(defineProps<{ size?: number; wordmark?: boolean }>(), { size: 30, wordmark: true })
+defineProps({
+  size: { type: Number, default: 30 },
+  wordmark: { type: Boolean, default: true },
+})
 </script>
 
 <template>

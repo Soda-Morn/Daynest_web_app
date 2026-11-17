@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { computed, nextTick, ref, watch } from 'vue'
 import {
   AlignLeft,
@@ -15,7 +15,6 @@ import {
   Trash2,
   X,
 } from 'lucide-vue-next'
-import type { Priority, RecurringEditScope, TaskStatus } from '@/types/models'
 import { PRIORITIES, REMINDER_OPTIONS, STATUSES } from '@/constants'
 import Segmented from '@/components/ui/Segmented.vue'
 import TaskCheck from '@/components/ui/TaskCheck.vue'
@@ -23,7 +22,7 @@ import DateMenu from './DateMenu.vue'
 import RecurrenceEditor from './RecurrenceEditor.vue'
 import SubtaskList from './SubtaskList.vue'
 import { useUiStore } from '@/stores/ui'
-import { useTaskStore, type InstancePatch } from '@/stores/tasks'
+import { useTaskStore } from '@/stores/tasks'
 import { useCollectionsStore } from '@/stores/collections'
 import { useTaskActions } from '@/composables/useTaskActions'
 import { useToast } from '@/composables/useToast'
@@ -42,10 +41,10 @@ const actions = useTaskActions()
 const toast = useToast()
 
 const inst = computed(() => (ui.detailKey ? store.resolveInstance(ui.detailKey) : null))
-const scope = ref<RecurringEditScope>('this')
+const scope = ref('this')
 const title = ref('')
 const description = ref('')
-const titleEl = ref<HTMLTextAreaElement | null>(null)
+const titleEl = ref(null)
 
 // If the task disappears (deleted elsewhere, undo), close the panel.
 watch(
@@ -79,7 +78,7 @@ const cal = computed(() => (inst.value ? collections.calendarById.get(inst.value
 const isRecurring = computed(() => !!inst.value?.occurrence)
 
 /** Applies a patch with the current scope and keeps the panel on the right instance. */
-function apply(patch: InstancePatch, forceScope?: RecurringEditScope) {
+function apply(patch, forceScope) {
   const i = inst.value
   if (!i) return
   const s = forceScope ?? (isRecurring.value ? scope.value : 'this')
@@ -90,7 +89,7 @@ function apply(patch: InstancePatch, forceScope?: RecurringEditScope) {
   const created = [...snap.keys()].find((id) => !before.has(id))
   let key = i.key
   if (created) {
-    const t = store.get(created)!
+    const t = store.get(created)
     key = `${created}@${t.startDate}`
     scope.value = 'all'
   } else if (s === 'all' && patch.startDate && i.startDate) {
@@ -115,7 +114,7 @@ function saveDescription() {
   if (inst.value && description.value !== inst.value.description) apply({ description: description.value })
 }
 
-function setDate(d: string | null) {
+function setDate(d) {
   const i = inst.value
   if (!i) return
   if (d === null) {
@@ -126,14 +125,14 @@ function setDate(d: string | null) {
   apply({ startDate: d })
 }
 
-function setEndDate(d: string | null) {
+function setEndDate(d) {
   const i = inst.value
   if (!i?.startDate) return
   if (!d || d < i.startDate) apply({ dueDate: i.startDate })
   else apply({ dueDate: d })
 }
 
-function setTime(which: 'startTime' | 'endTime', v: string) {
+function setTime(which, v) {
   const i = inst.value
   if (!i) return
   const val = v || null
@@ -142,17 +141,17 @@ function setTime(which: 'startTime' | 'endTime', v: string) {
   apply({ [which]: val })
 }
 
-function setStatus(s: TaskStatus) {
+function setStatus(s) {
   apply({ status: s }, 'this')
 }
 
-function addReminder(mins: string) {
+function addReminder(mins) {
   const i = inst.value
   if (!i || mins === '') return
   apply({ reminders: [...new Set([...i.task.reminders, +mins])] }, 'all')
 }
 
-const reminderLabel = (m: number) => REMINDER_OPTIONS.find((o) => o.value === m)?.label ?? `${m} min before`
+const reminderLabel = (m) => REMINDER_OPTIONS.find((o) => o.value === m)?.label ?? `${m} min before`
 
 const created = computed(() =>
   inst.value ? new Date(inst.value.task.createdAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '',
@@ -162,16 +161,16 @@ const updated = computed(() =>
 )
 
 const scopeOptions = [
-  { value: 'this' as const, label: 'This' },
-  { value: 'future' as const, label: 'Following' },
-  { value: 'all' as const, label: 'All' },
+  { value: 'this', label: 'This' },
+  { value: 'future', label: 'Following' },
+  { value: 'all', label: 'All' },
 ]
 
 function close() {
   ui.closeTask()
 }
 
-function onPanelKey(e: KeyboardEvent) {
+function onPanelKey(e) {
   if (e.key === 'Escape') {
     e.stopPropagation()
     close()
@@ -201,7 +200,7 @@ function onPanelKey(e: KeyboardEvent) {
             aria-label="Title"
             @input="autosize"
             @blur="saveTitle"
-            @keydown.enter.prevent="($event.target as HTMLTextAreaElement).blur()"
+            @keydown.enter.prevent="($event.target).blur()"
           />
 
           <div v-if="isRecurring" class="scope">
@@ -238,9 +237,9 @@ function onPanelKey(e: KeyboardEvent) {
             <div v-if="inst.startDate" class="prop">
               <dt><Clock class="ico" />Time</dt>
               <dd class="row">
-                <input class="input time" type="time" :value="inst.startTime ?? ''" aria-label="Start time" @change="setTime('startTime', ($event.target as HTMLInputElement).value)" />
+                <input class="input time" type="time" :value="inst.startTime ?? ''" aria-label="Start time" @change="setTime('startTime', ($event.target).value)" />
                 <span class="to">–</span>
-                <input class="input time" type="time" :value="inst.endTime ?? ''" :disabled="!inst.startTime" aria-label="End time" @change="setTime('endTime', ($event.target as HTMLInputElement).value)" />
+                <input class="input time" type="time" :value="inst.endTime ?? ''" :disabled="!inst.startTime" aria-label="End time" @change="setTime('endTime', ($event.target).value)" />
                 <button v-if="inst.startTime" type="button" class="btn btn-ghost btn-sm" @click="apply({ startTime: null, endTime: null })">All day</button>
               </dd>
             </div>
@@ -264,7 +263,7 @@ function onPanelKey(e: KeyboardEvent) {
                     class="prio-btn"
                     :class="`p-${p.value}`"
                     :aria-checked="inst.priority === p.value"
-                    @click="apply({ priority: p.value as Priority })"
+                    @click="apply({ priority: p.value })"
                   >
                     <Flag />{{ p.label }}
                   </button>
@@ -275,7 +274,7 @@ function onPanelKey(e: KeyboardEvent) {
             <div class="prop">
               <dt><CircleDot class="ico" />Status</dt>
               <dd>
-                <select class="select" :value="inst.status" aria-label="Status" @change="setStatus(($event.target as HTMLSelectElement).value as TaskStatus)">
+                <select class="select" :value="inst.status" aria-label="Status" @change="setStatus(($event.target).value)">
                   <option v-for="s in STATUSES" :key="s.value" :value="s.value">{{ s.label }}</option>
                 </select>
               </dd>
@@ -284,7 +283,7 @@ function onPanelKey(e: KeyboardEvent) {
             <div class="prop">
               <dt><Palette class="ico" />Calendar</dt>
               <dd>
-                <select class="select" :value="inst.task.calendarId" aria-label="Calendar" @change="apply({ calendarId: ($event.target as HTMLSelectElement).value }, 'all')">
+                <select class="select" :value="inst.task.calendarId" aria-label="Calendar" @change="apply({ calendarId: ($event.target).value }, 'all')">
                   <option v-for="c in collections.sortedCalendars" :key="c.id" :value="c.id">{{ c.name }}</option>
                 </select>
               </dd>
@@ -293,7 +292,7 @@ function onPanelKey(e: KeyboardEvent) {
             <div class="prop">
               <dt><FolderOpen class="ico" />List</dt>
               <dd>
-                <select class="select" :value="inst.task.listId ?? ''" aria-label="List" @change="apply({ listId: ($event.target as HTMLSelectElement).value || null }, 'all')">
+                <select class="select" :value="inst.task.listId ?? ''" aria-label="List" @change="apply({ listId: ($event.target).value || null }, 'all')">
                   <option value="">No list</option>
                   <option v-for="l in collections.sortedLists" :key="l.id" :value="l.id">{{ l.name }}</option>
                 </select>
@@ -307,9 +306,9 @@ function onPanelKey(e: KeyboardEvent) {
                   {{ reminderLabel(m) }}
                   <button type="button" class="x" :aria-label="`Remove reminder ${reminderLabel(m)}`" @click="apply({ reminders: inst.task.reminders.filter((x) => x !== m) }, 'all')"><X /></button>
                 </span>
-                <select class="select add-rem" value="" aria-label="Add reminder" @change="addReminder(($event.target as HTMLSelectElement).value); ($event.target as HTMLSelectElement).value = ''">
+                <select class="select add-rem" value="" aria-label="Add reminder" @change="addReminder(($event.target).value); ($event.target).value = ''">
                   <option value="" disabled>Add reminder…</option>
-                  <option v-for="o in REMINDER_OPTIONS.filter((o) => !inst!.task.reminders.includes(o.value))" :key="o.value" :value="o.value">{{ o.label }}</option>
+                  <option v-for="o in REMINDER_OPTIONS.filter((o) => !inst.task.reminders.includes(o.value))" :key="o.value" :value="o.value">{{ o.label }}</option>
                 </select>
               </dd>
             </div>

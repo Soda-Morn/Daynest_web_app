@@ -1,6 +1,5 @@
-<script setup lang="ts">
+<script setup>
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
-import type { DateKey } from '@/types/models'
 import EventChip from './EventChip.vue'
 import DayListModal from './DayListModal.vue'
 import { useTaskStore } from '@/stores/tasks'
@@ -21,7 +20,7 @@ import { addDays, formatDate, isSameMonth, monthGrid, weekday, weekdayNames } fr
  * row; the number of lanes adapts to the cell height ("+N" for overflow).
  * Works on phones too: tap a day to see its tasks in a sheet.
  */
-const emit = defineEmits<{ openDay: [DateKey] }>()
+const emit = defineEmits(['openDay'])
 const store = useTaskStore()
 const collections = useCollectionsStore()
 const ui = useUiStore()
@@ -42,9 +41,9 @@ const range = computed(() => ({ start: weeks.value[0][0], end: weeks.value[weeks
 /** Only the visible range, only visible calendars. */
 const instances = computed(() => store.instancesInRange(range.value.start, range.value.end, collections.visibleCalendarIds))
 
-const gridEl = ref<HTMLElement | null>(null)
+const gridEl = ref(null)
 const gridHeight = ref(600)
-let ro: ResizeObserver | null = null
+let ro = null
 onMounted(() => {
   if (!gridEl.value) return
   ro = new ResizeObserver(([e]) => (gridHeight.value = e.contentRect.height))
@@ -61,37 +60,37 @@ const rows = computed(() =>
   weeks.value.map((week) => {
     const first = week[0]
     const last = week[6]
-    const inWeek = instances.value.filter((i) => i.startDate! <= last && i.dueDate! >= first)
+    const inWeek = instances.value.filter((i) => i.startDate <= last && i.dueDate >= first)
     return { week, layout: layoutWeekRow(week, inWeek, maxLanes.value) }
   }),
 )
 
-const dayModal = shallowRef<DateKey | null>(null)
+const dayModal = shallowRef(null)
 
 /** Desktop: click a day to add a task there. Phone: open the day's sheet. */
-function activateDay(d: DateKey) {
+function activateDay(d) {
   ui.selectedDate = d
   if (isMobile.value) dayModal.value = d
   else ui.openQuickAdd({ startDate: d })
 }
 
-function onCellClick(d: DateKey, e: MouseEvent) {
-  if ((e.target as HTMLElement).closest('button')) return
+function onCellClick(d, e) {
+  if (e.target.closest('button')) return
   activateDay(d)
 }
 
-function onCellKey(d: DateKey, e: KeyboardEvent) {
+function onCellKey(d, e) {
   if (e.target !== e.currentTarget) return
   if (e.key === 'Enter') activateDay(d)
-  const step: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }
+  const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }
   if (step[e.key]) {
     e.preventDefault()
     ui.selectedDate = addDays(d, step[e.key])
-    requestAnimationFrame(() => document.querySelector<HTMLElement>(`.month .cell[data-drop-date="${ui.selectedDate}"]`)?.focus())
+    requestAnimationFrame(() => document.querySelector(`.month .cell[data-drop-date="${ui.selectedDate}"]`)?.focus())
   }
 }
 
-function onNumClick(d: DateKey) {
+function onNumClick(d) {
   if (isMobile.value) activateDay(d)
   else emit('openDay', d)
 }
@@ -100,11 +99,11 @@ function onNumClick(d: DateKey) {
 const nav = useCalendarNav()
 let sx = 0
 let sy = 0
-function onTouchStart(e: TouchEvent) {
+function onTouchStart(e) {
   sx = e.touches[0].clientX
   sy = e.touches[0].clientY
 }
-function onTouchEnd(e: TouchEvent) {
+function onTouchEnd(e) {
   const dx = e.changedTouches[0].clientX - sx
   const dy = e.changedTouches[0].clientY - sy
   if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) (dx < 0 ? nav.next : nav.prev)()
@@ -112,7 +111,7 @@ function onTouchEnd(e: TouchEvent) {
 
 const dropDate = computed(() => dragState.value?.overDate ?? null)
 const dragKey = computed(() => dragState.value?.inst.key ?? null)
-const fullLabel = (d: DateKey) => formatDate(d, { weekday: 'long', month: 'long', day: 'numeric' })
+const fullLabel = (d) => formatDate(d, { weekday: 'long', month: 'long', day: 'numeric' })
 </script>
 
 <template>

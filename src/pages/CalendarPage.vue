@@ -1,6 +1,5 @@
-<script setup lang="ts">
+<script setup>
 import { computed, defineAsyncComponent, watch } from 'vue'
-import type { DateKey } from '@/types/models'
 import MonthView from '@/components/calendar/MonthView.vue'
 import { useUiStore } from '@/stores/ui'
 import { useSettingsStore } from '@/stores/settings'
@@ -21,13 +20,9 @@ const nav = useCalendarNav()
 const weekDays = computed(() => Array.from({ length: 7 }, (_, i) => addDays(nav.weekStart.value, i)))
 
 // Phone and desktop each open in their own remembered view.
-watch(
-  isMobile,
-  (m) => (ui.calendarView = m ? settings.settings.calendarViewMobile : settings.settings.calendarView),
-  { immediate: true },
-)
+watch(isMobile, (m) => (ui.calendarView = m ? settings.settings.calendarViewMobile : settings.settings.calendarView), { immediate: true })
 
-function openDay(d: DateKey) {
+function openDay(d) {
   ui.selectedDate = d
   nav.setView('day')
 }

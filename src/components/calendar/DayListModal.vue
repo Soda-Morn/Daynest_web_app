@@ -1,20 +1,23 @@
-<script setup lang="ts">
+<script setup>
 import { computed } from 'vue'
 import Modal from '@/components/ui/Modal.vue'
 import TaskItem from '@/components/task/TaskItem.vue'
 import InlineAdd from '@/components/task/InlineAdd.vue'
-import type { DateKey } from '@/types/models'
 import { useTaskStore } from '@/stores/tasks'
 import { useCollectionsStore } from '@/stores/collections'
 import { formatDate } from '@/utils/date'
 
 /** All tasks of one day ("+N more" in the month view). */
-const props = defineProps<{ date: DateKey | null }>()
-defineEmits<{ close: [] }>()
+const props = defineProps({
+  date: { type: [String, null], required: true },
+})
+defineEmits(['close'])
 const store = useTaskStore()
 const collections = useCollectionsStore()
 
-const items = computed(() => (props.date ? (store.dayMap(props.date, props.date, collections.visibleCalendarIds).get(props.date) ?? []) : []))
+const items = computed(() =>
+  props.date ? (store.dayMap(props.date, props.date, collections.visibleCalendarIds).get(props.date) ?? []) : [],
+)
 const title = computed(() => (props.date ? formatDate(props.date, { weekday: 'long', month: 'long', day: 'numeric' }) : ''))
 const defaults = computed(() => ({ startDate: props.date }))
 </script>

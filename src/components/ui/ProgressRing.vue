@@ -1,7 +1,12 @@
-<script setup lang="ts">
+<script setup>
 import { computed } from 'vue'
 
-const props = withDefaults(defineProps<{ value: number; total: number; size?: number; stroke?: number }>(), { size: 76, stroke: 8 })
+const props = defineProps({
+  value: { type: Number, required: true },
+  total: { type: Number, required: true },
+  size: { type: Number, default: 76 },
+  stroke: { type: Number, default: 8 },
+})
 const r = computed(() => (props.size - props.stroke) / 2)
 const circ = computed(() => 2 * Math.PI * r.value)
 const pct = computed(() => (props.total ? Math.min(1, props.value / props.total) : 0))

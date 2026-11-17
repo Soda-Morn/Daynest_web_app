@@ -1,7 +1,6 @@
-<script setup lang="ts">
+<script setup>
 import { computed } from 'vue'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
-import type { DateKey } from '@/types/models'
 import { useUiStore } from '@/stores/ui'
 import { useSettingsStore } from '@/stores/settings'
 import { useTaskStore } from '@/stores/tasks'
@@ -26,9 +25,9 @@ const heading = computed(() => `${formatDate(ui.selectedDate, { month: 'long' })
 /** Up to three category colours per day, from one range query. */
 const dots = computed(() => {
   const map = store.dayMap(days.value[0], days.value[6], collections.visibleCalendarIds)
-  const out = new Map<DateKey, string[]>()
+  const out = new Map()
   for (const [d, list] of map) {
-    const colors: string[] = []
+    const colors = []
     for (const i of list) {
       if (isDone(i.status)) continue
       const c = collections.colorOf(i.task.calendarId)
@@ -40,27 +39,27 @@ const dots = computed(() => {
   return out
 })
 
-function shift(weeks: number) {
+function shift(weeks) {
   ui.selectedDate = addDays(ui.selectedDate, weeks * 7)
 }
 
 let sx = 0
 let sy = 0
-function onTouchStart(e: TouchEvent) {
+function onTouchStart(e) {
   sx = e.touches[0].clientX
   sy = e.touches[0].clientY
 }
-function onTouchEnd(e: TouchEvent) {
+function onTouchEnd(e) {
   const dx = e.changedTouches[0].clientX - sx
   const dy = e.changedTouches[0].clientY - sy
   if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) shift(dx < 0 ? 1 : -1)
 }
 
-function onKey(e: KeyboardEvent, d: DateKey) {
+function onKey(e, d) {
   if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
     e.preventDefault()
     ui.selectedDate = addDays(d, e.key === 'ArrowRight' ? 1 : -1)
-    requestAnimationFrame(() => (document.querySelector('.ws-day[aria-selected="true"]') as HTMLElement | null)?.focus())
+    requestAnimationFrame(() => document.querySelector('.ws-day[aria-selected="true"]')?.focus())
   }
 }
 </script>

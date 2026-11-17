@@ -1,19 +1,21 @@
-<script setup lang="ts">
+<script setup>
 import { computed, nextTick, ref, watch } from 'vue'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
-import type { DateKey } from '@/types/models'
 import { addDays, addMonths, formatDate, isSameMonth, monthGrid, weekdayNames } from '@/utils/date'
 import { useUiStore } from '@/stores/ui'
 import { useSettingsStore } from '@/stores/settings'
 
 /** Compact month picker with keyboard support (arrows, PageUp/Down, Enter). */
-const props = defineProps<{ modelValue: DateKey | null; markers?: Set<DateKey> }>()
-const emit = defineEmits<{ select: [DateKey] }>()
+const props = defineProps({
+  modelValue: { type: [String, null], required: true },
+  markers: { type: Set, default: undefined },
+})
+const emit = defineEmits(['select'])
 
 const ui = useUiStore()
 const settings = useSettingsStore()
-const cursor = ref<DateKey>(props.modelValue ?? ui.today)
-const grid = ref<HTMLElement | null>(null)
+const cursor = ref(props.modelValue ?? ui.today)
+const grid = ref(null)
 watch(
   () => props.modelValue,
   (v) => v && (cursor.value = v),
@@ -23,8 +25,8 @@ const weeks = computed(() => monthGrid(cursor.value, settings.settings.weekStart
 const names = computed(() => weekdayNames(settings.settings.weekStartsOn, 'narrow'))
 const title = computed(() => formatDate(cursor.value, { month: 'long', year: 'numeric' }))
 
-async function onKey(e: KeyboardEvent) {
-  const steps: Record<string, () => DateKey> = {
+async function onKey(e) {
+  const steps = {
     ArrowLeft: () => addDays(cursor.value, -1),
     ArrowRight: () => addDays(cursor.value, 1),
     ArrowUp: () => addDays(cursor.value, -7),
@@ -43,7 +45,7 @@ async function onKey(e: KeyboardEvent) {
   e.stopPropagation()
   cursor.value = step()
   await nextTick()
-  grid.value?.querySelector<HTMLElement>('[tabindex="0"]')?.focus()
+  grid.value?.querySelector('[tabindex="0"]')?.focus()
 }
 </script>
 

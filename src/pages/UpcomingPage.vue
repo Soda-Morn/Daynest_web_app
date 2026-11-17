@@ -1,9 +1,8 @@
-<script setup lang="ts">
+<script setup>
 import { computed, ref } from 'vue'
 import { CalendarRange } from 'lucide-vue-next'
 import GroupedTaskList from '@/components/task/GroupedTaskList.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
-import type { TaskGroup } from '@/types/ui'
 import { useTaskStore } from '@/stores/tasks'
 import { useUiStore } from '@/stores/ui'
 import { addDays, formatDate, relativeDayLabel } from '@/utils/date'
@@ -15,16 +14,19 @@ const ui = useUiStore()
 const days = ref(30)
 const end = computed(() => addDays(ui.today, days.value - 1))
 
-const groups = computed<TaskGroup[]>(() => {
-  const out: TaskGroup[] = []
+const groups = computed(() => {
+  const out = []
   const overdue = store.overdueInstances(ui.today)
   if (overdue.length) out.push({ id: 'overdue', label: 'Overdue', tone: 'late', items: overdue })
   const map = store.dayMap(ui.today, end.value)
-  const seen = new Set<string>()
+  const seen = new Set()
   for (const d of [...map.keys()].sort()) {
-    const items = map.get(d)!.filter((i) => !isDone(i.status) && !seen.has(i.key) && (seen.add(i.key), true))
+    const items = map.get(d).filter((i) => !isDone(i.status) && !seen.has(i.key) && (seen.add(i.key), true))
     if (!items.length) continue
-    const label = d === ui.today || d === addDays(ui.today, 1) ? relativeDayLabel(d, ui.today) : formatDate(d, { weekday: 'short', month: 'long', day: 'numeric' })
+    const label =
+      d === ui.today || d === addDays(ui.today, 1)
+        ? relativeDayLabel(d, ui.today)
+        : formatDate(d, { weekday: 'short', month: 'long', day: 'numeric' })
     out.push({ id: d, label, items })
   }
   return out

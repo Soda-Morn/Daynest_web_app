@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { Check, Pencil, Plus } from 'lucide-vue-next'
@@ -14,7 +14,7 @@ const route = useRoute()
 
 /** Open task count per list — one pass over the tasks. */
 const openByList = computed(() => {
-  const m = new Map<string, number>()
+  const m = new Map()
   for (const t of store.byId.values()) if (t.listId && !isDone(t.status)) m.set(t.listId, (m.get(t.listId) ?? 0) + 1)
   return m
 })

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMediaQuery } from '@/composables/useMediaQuery'
@@ -51,10 +51,10 @@ const overdueCount = computed(() => store.overdueInstances(ui.today).length)
 /** Next open tasks after today, by date (cheap: two weeks of the index). */
 const upcoming = computed(() => {
   const map = store.dayMap(addDays(ui.today, 1), addDays(ui.today, 14))
-  const seen = new Set<string>()
+  const seen = new Set()
   const out = []
   for (const d of [...map.keys()].sort()) {
-    for (const i of map.get(d)!) {
+    for (const i of map.get(d)) {
       if (isDone(i.status) || seen.has(i.key)) continue
       seen.add(i.key)
       out.push(i)
@@ -115,7 +115,7 @@ const nav = computed(() => [
             <TaskCheck size="sm" :checked="i.status === 'completed'" :priority="i.priority" :label="`Complete ${i.title}`" @toggle="actions.toggleComplete(i)" />
             <button type="button" class="up-btn" @click="ui.openTask(i)">
               <span class="up-title-text">{{ i.title }}</span>
-              <span class="up-meta"><span class="dot" :style="{ '--c': collections.colorOf(i.task.calendarId) }" />{{ relativeDayLabel(i.startDate!, ui.today) }}</span>
+              <span class="up-meta"><span class="dot" :style="{ '--c': collections.colorOf(i.task.calendarId) }" />{{ relativeDayLabel(i.startDate, ui.today) }}</span>
             </button>
           </li>
         </ul>

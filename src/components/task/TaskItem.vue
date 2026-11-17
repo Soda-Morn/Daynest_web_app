@@ -1,7 +1,6 @@
-<script setup lang="ts">
+<script setup>
 import { computed } from 'vue'
 import { AlignLeft, CalendarClock, GripVertical, ListChecks, Repeat } from 'lucide-vue-next'
-import type { TaskInstance } from '@/types/models'
 import TaskCheck from '@/components/ui/TaskCheck.vue'
 import DateMenu from './DateMenu.vue'
 import PriorityFlag from './PriorityFlag.vue'
@@ -16,11 +15,14 @@ import { isDone, isOverdue } from '@/utils/task'
  * A task row used by every list page. Pure presentation + quick actions;
  * all mutations go through useTaskActions.
  */
-const props = withDefaults(
-  defineProps<{ inst: TaskInstance; showDate?: boolean; showList?: boolean; reorderable?: boolean; dragging?: boolean }>(),
-  { showDate: true, showList: true, reorderable: false, dragging: false },
-)
-const emit = defineEmits<{ grab: [PointerEvent]; nudge: [-1 | 1] }>()
+const props = defineProps({
+  inst: { type: Object, required: true },
+  showDate: { type: Boolean, default: true },
+  showList: { type: Boolean, default: true },
+  reorderable: { type: Boolean, default: false },
+  dragging: { type: Boolean, default: false },
+})
+const emit = defineEmits(['grab', 'nudge'])
 
 const collections = useCollectionsStore()
 const ui = useUiStore()
@@ -35,7 +37,7 @@ const subDone = computed(() => props.inst.subtasks.filter((s) => s.done).length)
 
 const when = computed(() => {
   const i = props.inst
-  const parts: string[] = []
+  const parts = []
   if (props.showDate && i.startDate) {
     parts.push(relativeDayLabel(i.startDate, ui.today))
     if (i.dueDate && i.dueDate !== i.startDate) parts[0] += ` – ${relativeDayLabel(i.dueDate, ui.today)}`
@@ -51,7 +53,7 @@ function open() {
   ui.openTask(props.inst)
 }
 
-function onKey(e: KeyboardEvent) {
+function onKey(e) {
   if (e.target !== e.currentTarget) return
   if (e.key === 'Enter') open()
   else if (e.key === ' ') {

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { CalendarDays, CalendarRange, Ellipsis, ListTodo, Plus, Sun } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 import { useUiStore } from '@/stores/ui'

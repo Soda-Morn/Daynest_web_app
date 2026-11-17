@@ -1,6 +1,10 @@
-<script setup lang="ts" generic="T extends string">
-defineProps<{ modelValue: T; options: { value: T; label: string }[]; label: string }>()
-defineEmits<{ 'update:modelValue': [T] }>()
+<script setup>
+defineProps({
+  modelValue: { type: String, required: true },
+  options: { type: Array, required: true },
+  label: { type: String, required: true },
+})
+defineEmits(['update:modelValue'])
 </script>
 
 <template>

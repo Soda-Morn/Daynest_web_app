@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { computed } from 'vue'
 import { dragState } from '@/composables/useDragTask'
 import { useCollectionsStore } from '@/stores/collections'

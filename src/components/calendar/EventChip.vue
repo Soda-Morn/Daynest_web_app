@@ -1,7 +1,6 @@
-<script setup lang="ts">
+<script setup>
 import { computed } from 'vue'
 import { Check, Repeat } from 'lucide-vue-next'
-import type { TaskInstance } from '@/types/models'
 import { useCollectionsStore } from '@/stores/collections'
 import { useSettingsStore } from '@/stores/settings'
 import { useUiStore } from '@/stores/ui'
@@ -15,16 +14,14 @@ import { isDone, isMultiDay } from '@/utils/task'
  * `pill` = the month-view style: a small pastel tag with a coloured left
  * edge (timed tasks too); `compact` hides times and centres the label (phones).
  */
-const props = withDefaults(
-  defineProps<{ inst: TaskInstance; continuesBefore?: boolean; continuesAfter?: boolean; draggable?: boolean; pill?: boolean; compact?: boolean }>(),
-  {
-    continuesBefore: false,
-    continuesAfter: false,
-    draggable: true,
-    pill: false,
-    compact: false,
-  },
-)
+const props = defineProps({
+  inst: { type: Object, required: true },
+  continuesBefore: { type: Boolean, default: false },
+  continuesAfter: { type: Boolean, default: false },
+  draggable: { type: Boolean, default: true },
+  pill: { type: Boolean, default: false },
+  compact: { type: Boolean, default: false },
+})
 
 const collections = useCollectionsStore()
 const settings = useSettingsStore()
@@ -42,7 +39,7 @@ function onClick() {
   if (wasDragging()) return
   ui.openTask(props.inst)
 }
-function onPointerDown(e: PointerEvent) {
+function onPointerDown(e) {
   if (props.draggable) startTaskDrag(e, props.inst, actions.move)
 }
 </script>

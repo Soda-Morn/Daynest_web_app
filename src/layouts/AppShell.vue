@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { applyUpdate, online, updateReady } from '@/pwa/pwa'
@@ -22,7 +22,7 @@ const CollectionDialog = defineAsyncComponent(() => import('@/components/layout/
 
 const isMobile = useIsMobile()
 const ui = useUiStore()
-const topbar = ref<InstanceType<typeof TopBar> | null>(null)
+const topbar = ref(null)
 
 useShortcuts(() => topbar.value?.focusSearch())
 useReminders()

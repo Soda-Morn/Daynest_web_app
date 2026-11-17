@@ -1,16 +1,15 @@
-<script setup lang="ts">
+<script setup>
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ListTodo } from 'lucide-vue-next'
 import FilterBar from '@/components/task/FilterBar.vue'
 import GroupedTaskList from '@/components/task/GroupedTaskList.vue'
-import type { TaskGroup } from '@/types/ui'
 import InlineAdd from '@/components/task/InlineAdd.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import { useTaskStore } from '@/stores/tasks'
 import { useCollectionsStore } from '@/stores/collections'
 import { useUiStore } from '@/stores/ui'
-import { emptyFilter, makePredicate, type QuickFilter, type TaskFilter } from '@/utils/filters'
+import { emptyFilter, makePredicate } from '@/utils/filters'
 import { compareByDate, compareInstances } from '@/utils/task'
 
 /** My Tasks: every task, grouped by list. `?list=<id>` narrows to one list. */
@@ -23,10 +22,10 @@ const ui = useUiStore()
 const listId = computed(() => (typeof route.query.list === 'string' ? route.query.list : null))
 const activeList = computed(() => (listId.value ? collections.listById.get(listId.value) : undefined))
 
-const filter = ref<TaskFilter>({ ...emptyFilter(), quick: (route.query.filter as QuickFilter) || 'all' })
+const filter = ref({ ...emptyFilter(), quick: route.query.filter || 'all' })
 watch(
   () => route.query.filter,
-  (f) => (filter.value = { ...filter.value, quick: (f as QuickFilter) || 'all' }),
+  (f) => (filter.value = { ...filter.value, quick: f || 'all' }),
 )
 watch(
   () => filter.value.quick,
@@ -36,30 +35,29 @@ watch(
 )
 
 const names = {
-  calendar: (id: string) => collections.calendarById.get(id)?.name ?? '',
-  list: (id: string | null) => (id ? (collections.listById.get(id)?.name ?? '') : ''),
+  calendar: (id) => collections.calendarById.get(id)?.name ?? '',
+  list: (id) => (id ? (collections.listById.get(id)?.name ?? '') : ''),
 }
 
 const matched = computed(() => {
-  const f: TaskFilter = { ...filter.value, listIds: listId.value ? [listId.value] : filter.value.listIds }
+  const f = { ...filter.value, listIds: listId.value ? [listId.value] : filter.value.listIds }
   const pred = makePredicate(f, ui.today, names)
   const all = store.listInstances(ui.today)
   // "All" hides finished tasks; the Completed filter shows them.
   return all.filter((i) => (f.quick === 'all' ? i.status !== 'completed' && i.status !== 'cancelled' : true) && pred(i))
 })
 
-const groups = computed<TaskGroup[]>(() => {
-  const sort = (a: Parameters<typeof compareByDate>[0], b: Parameters<typeof compareByDate>[0]) =>
-    a.startDate || b.startDate ? compareByDate(a, b) : compareInstances(a, b)
+const groups = computed(() => {
+  const sort = (a, b) => (a.startDate || b.startDate ? compareByDate(a, b) : compareInstances(a, b))
   if (listId.value) return [{ id: 'list', label: '', items: [...matched.value].sort(sort) }]
-  const byList = new Map<string, typeof matched.value>()
+  const byList = new Map()
   for (const i of matched.value) {
     const k = i.task.listId && collections.listById.has(i.task.listId) ? i.task.listId : ''
     const arr = byList.get(k) ?? []
     arr.push(i)
     byList.set(k, arr)
   }
-  const out: TaskGroup[] = collections.sortedLists.map((l) => ({ id: l.id, label: l.name, items: (byList.get(l.id) ?? []).sort(sort) }))
+  const out = collections.sortedLists.map((l) => ({ id: l.id, label: l.name, items: (byList.get(l.id) ?? []).sort(sort) }))
   out.push({ id: 'none', label: 'No list', items: (byList.get('') ?? []).sort(sort) })
   return out
 })

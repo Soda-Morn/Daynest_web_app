@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { CalendarCheck, Check, ChevronLeft, ChevronRight, Ellipsis, Plus, Search, Settings, X } from 'lucide-vue-next'
@@ -7,9 +7,10 @@ import Dropdown from '@/components/ui/Dropdown.vue'
 import SyncStatus from './SyncStatus.vue'
 import { online } from '@/pwa/pwa'
 import { saveStatus } from '@/services/persistence'
-import type { CalendarView } from '@/types/models'
 import { useUiStore } from '@/stores/ui'
 import { useSettingsStore } from '@/stores/settings'
+import { useAuthStore } from '@/stores/auth'
+import { cloudEnabled } from '@/services/supabase'
 import { useCalendarNav } from '@/composables/useCalendarNav'
 import { useIsMobile, useMediaQuery } from '@/composables/useMediaQuery'
 
@@ -34,10 +35,10 @@ const title = computed(() =>
       ? compact.value
         ? nav.shortTitle.value
         : nav.title.value
-      : ((route.meta.title as string) ?? ''),
+      : (route.meta.title ?? ''),
 )
 
-const views: { value: CalendarView; label: string }[] = [
+const views = [
   { value: 'month', label: 'Month' },
   { value: 'week', label: 'Week' },
   { value: 'day', label: 'Day' },
@@ -45,10 +46,10 @@ const views: { value: CalendarView; label: string }[] = [
 ]
 
 /* ---- Search: debounced navigation to /search?q= ---- */
-const searchEl = ref<HTMLInputElement | null>(null)
+const searchEl = ref(null)
 const q = ref(typeof route.query.q === 'string' ? route.query.q : '')
-let timer: ReturnType<typeof setTimeout> | null = null
-let returnTo: string | null = null
+let timer = null
+let returnTo = null
 watch(q, (val) => {
   if (timer) clearTimeout(timer)
   timer = setTimeout(() => {
@@ -70,6 +71,12 @@ watch(
 function clearSearch() {
   q.value = ''
   searchEl.value?.focus()
+}
+
+const auth = useAuthStore()
+function openProfile() {
+  if (cloudEnabled) void router.push({ name: 'account' })
+  else ui.settingsOpen = true
 }
 
 const initials = computed(() => {
@@ -165,8 +172,9 @@ defineExpose({ focusSearch: () => (compact.value ? router.push({ name: 'search' 
 
       <button v-if="!isMobile" type="button" class="btn btn-primary btn-sm add" title="Quick add (N)" :aria-label="compact ? 'Add task' : undefined" @click="ui.openQuickAdd()"><Plus /><span v-if="!compact">Add</span></button>
       <button v-if="!isMobile" type="button" class="icon-btn" aria-label="Settings" title="Settings" @click="ui.settingsOpen = true"><Settings /></button>
-      <button type="button" class="avatar" :aria-label="`Profile${settings.settings.userName ? ': ' + settings.settings.userName : ''}`" title="Profile & settings" @click="ui.settingsOpen = true">
-        <span v-if="initials">{{ initials }}</span>
+      <button type="button" class="avatar" :aria-label="`Profile${settings.settings.userName ? ': ' + settings.settings.userName : ''}`" :title="cloudEnabled ? 'Account' : 'Profile & settings'" @click="openProfile">
+        <img v-if="auth.profile?.avatarUrl" :src="auth.profile.avatarUrl" alt="" class="avatar-img" />
+        <span v-else-if="initials">{{ initials }}</span>
         <svg v-else viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="4" fill="currentColor" /><path d="M4 20c1.5-4 4.5-5.5 8-5.5s6.5 1.5 8 5.5" fill="currentColor" /></svg>
       </button>
     </div>
@@ -212,6 +220,7 @@ defineExpose({ focusSearch: () => (compact.value ? router.push({ name: 'search' 
   flex-shrink: 0;
   overflow: hidden;
 }
+.avatar-img { width: 100%; height: 100%; object-fit: cover; }
 .avatar svg { width: 22px; height: 22px; margin-top: 6px; opacity: 0.9; }
 .title { flex-shrink: 0; max-width: 100%; }
 @media (max-width: 1440px) { .search { width: 168px; } }

@@ -1,10 +1,14 @@
-<script setup lang="ts">
+<script setup>
 import { Check } from 'lucide-vue-next'
-import type { Priority } from '@/types/models'
 
 /** Round completion checkbox. Ring colour hints at priority. */
-defineProps<{ checked: boolean; priority?: Priority; label: string; size?: 'sm' | 'md' }>()
-defineEmits<{ toggle: [] }>()
+defineProps({
+  checked: { type: Boolean, required: true },
+  priority: { type: String, default: undefined },
+  label: { type: String, required: true },
+  size: { type: String, default: undefined },
+})
+defineEmits(['toggle'])
 </script>
 
 <template>

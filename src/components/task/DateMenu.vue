@@ -1,25 +1,25 @@
-<script setup lang="ts">
+<script setup>
 import { computed } from 'vue'
 import { CalendarDays, CalendarX2, Sofa, Sun, Sunrise } from 'lucide-vue-next'
 import Dropdown from '@/components/ui/Dropdown.vue'
 import MiniCalendar from '@/components/ui/MiniCalendar.vue'
-import type { DateKey } from '@/types/models'
 import { addDays, formatDate, weekday } from '@/utils/date'
 import { useUiStore } from '@/stores/ui'
 
 /** Quick reschedule menu: common choices + a month picker. */
-withDefaults(defineProps<{ modelValue: DateKey | null; allowClear?: boolean; placement?: 'bottom-start' | 'bottom-end' }>(), {
-  allowClear: true,
-  placement: 'bottom-start',
+defineProps({
+  modelValue: { type: [String, null], required: true },
+  allowClear: { type: Boolean, default: true },
+  placement: { type: String, default: 'bottom-start' },
 })
-const emit = defineEmits<{ pick: [DateKey | null] }>()
+const emit = defineEmits(['pick'])
 const ui = useUiStore()
 
 const options = computed(() => {
   const t = ui.today
   const wd = weekday(t)
   const sat = addDays(t, (6 - wd + 7) % 7 || 7)
-  const nextMon = addDays(t, ((1 - wd + 7) % 7) || 7)
+  const nextMon = addDays(t, (1 - wd + 7) % 7 || 7)
   return [
     { label: 'Today', date: t, icon: Sun },
     { label: 'Tomorrow', date: addDays(t, 1), icon: Sunrise },
@@ -28,7 +28,7 @@ const options = computed(() => {
   ]
 })
 
-function choose(d: DateKey | null, close: (f?: boolean) => void) {
+function choose(d, close) {
   emit('pick', d)
   close()
 }

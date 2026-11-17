@@ -1,7 +1,6 @@
-<script setup lang="ts">
+<script setup>
 import { computed, ref } from 'vue'
 import { CalendarCheck2 } from 'lucide-vue-next'
-import type { DateKey, TaskInstance } from '@/types/models'
 import TaskItem from '@/components/task/TaskItem.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import { useTaskStore } from '@/stores/tasks'
@@ -30,18 +29,18 @@ const groups = computed(() => {
   const weekStart = startOfWeek(today, settings.settings.weekStartsOn)
   const thisWeekEnd = addDays(weekStart, 6)
   const nextWeekEnd = addDays(weekStart, 13)
-  const buckets: { id: string; label: string; days: { date: DateKey; items: TaskInstance[] }[] }[] = [
+  const buckets = [
     { id: 'today', label: 'Today', days: [] },
     { id: 'tomorrow', label: 'Tomorrow', days: [] },
     { id: 'week', label: 'This week', days: [] },
     { id: 'next', label: 'Next week', days: [] },
     { id: 'later', label: 'Later', days: [] },
   ]
-  const seen = new Set<string>()
+  const seen = new Set()
   const keys = [...map.value.keys()].sort()
   for (const d of keys) {
     // Show multi-day tasks once, on their first visible day.
-    const items = map.value.get(d)!.filter((i) => (seen.has(i.key) ? false : (seen.add(i.key), true)))
+    const items = map.value.get(d).filter((i) => (seen.has(i.key) ? false : (seen.add(i.key), true)))
     if (!items.length) continue
     const b = d === today ? 0 : d === tomorrow ? 1 : d <= thisWeekEnd ? 2 : d <= nextWeekEnd ? 3 : 4
     buckets[b].days.push({ date: d, items })
@@ -50,12 +49,8 @@ const groups = computed(() => {
 })
 
 /** Flattened rows so long ranges render incrementally (bounded DOM size). */
-type Row =
-  | { kind: 'group'; key: string; label: string }
-  | { kind: 'day'; key: string; label: string }
-  | { kind: 'item'; key: string; inst: TaskInstance }
-const rows = computed<Row[]>(() => {
-  const out: Row[] = []
+const rows = computed(() => {
+  const out = []
   for (const g of groups.value) {
     out.push({ kind: 'group', key: 'g:' + g.id, label: g.label })
     for (const day of g.days) {
@@ -66,9 +61,9 @@ const rows = computed<Row[]>(() => {
   return out
 })
 const { visible, hasMore, sentinel, more } = useIncremental(rows, 80)
-const setSentinel = (el: unknown) => (sentinel.value = (el as HTMLElement | null) ?? null)
+const setSentinel = (el) => (sentinel.value = el ?? null)
 
-function dayLabel(d: DateKey) {
+function dayLabel(d) {
   return d === ui.today || d === addDays(ui.today, 1)
     ? formatDate(d, { weekday: 'long', month: 'short', day: 'numeric' })
     : relativeDayLabel(d, ui.today) + ' · ' + formatDate(d, { month: 'short', day: 'numeric' })

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { computed, ref, watch } from 'vue'
 import { Trash2 } from 'lucide-vue-next'
 import Modal from '@/components/ui/Modal.vue'
@@ -17,14 +17,14 @@ const tasks = useTaskStore()
 const toast = useToast()
 
 const name = ref('')
-const color = ref<string>(PALETTE[0].value)
+const color = ref(PALETTE[0].value)
 const error = ref('')
 
 const state = computed(() => collectionDialog.value)
 const editing = computed(() => {
   const s = state.value
   if (!s?.id) return null
-  return s.kind === 'calendar' ? collections.calendarById.get(s.id) ?? null : collections.listById.get(s.id) ?? null
+  return s.kind === 'calendar' ? (collections.calendarById.get(s.id) ?? null) : (collections.listById.get(s.id) ?? null)
 })
 const noun = computed(() => (state.value?.kind === 'calendar' ? 'calendar' : 'list'))
 const title = computed(() => (editing.value ? `Edit ${noun.value}` : `New ${noun.value}`))

@@ -1,5 +1,6 @@
-<script setup lang="ts">
-import { ChevronRight, CircleCheckBig, Search, Settings } from 'lucide-vue-next'
+<script setup>
+import { ChevronRight, CircleCheckBig, CircleUser, Search, Settings } from 'lucide-vue-next'
+import { cloudEnabled } from '@/services/supabase'
 import CollectionsPanel from '@/components/layout/CollectionsPanel.vue'
 import SyncStatus from '@/components/layout/SyncStatus.vue'
 import { canInstall, promptInstall } from '@/pwa/pwa'
@@ -15,6 +16,7 @@ const ui = useUiStore()
       <nav class="card links" aria-label="More">
         <RouterLink to="/completed" class="link"><CircleCheckBig class="ic" />Completed<ChevronRight class="chev" /></RouterLink>
         <RouterLink to="/search" class="link"><Search class="ic" />Search &amp; filters<ChevronRight class="chev" /></RouterLink>
+        <RouterLink v-if="cloudEnabled" to="/account" class="link"><CircleUser class="ic" />Account<ChevronRight class="chev" /></RouterLink>
         <button type="button" class="link" @click="ui.settingsOpen = true"><Settings class="ic" />Settings &amp; data<ChevronRight class="chev" /></button>
       </nav>
       <div class="card status">

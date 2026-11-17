@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { nextTick, onBeforeUnmount, ref } from 'vue'
 
 /**
@@ -6,20 +6,20 @@ import { nextTick, onBeforeUnmount, ref } from 'vue'
  * coordinates, flips/clamps to stay on screen, closes on outside click or
  * Escape and supports arrow-key navigation between items.
  */
-const props = withDefaults(defineProps<{ placement?: 'bottom-start' | 'bottom-end'; width?: number; label?: string }>(), {
-  placement: 'bottom-start',
-  width: 0,
-  label: '',
+const props = defineProps({
+  placement: { type: String, default: 'bottom-start' },
+  width: { type: Number, default: 0 },
+  label: { type: String, default: '' },
 })
-const emit = defineEmits<{ open: []; close: [] }>()
+const emit = defineEmits(['open', 'close'])
 
 const open = ref(false)
-const trigger = ref<HTMLElement | null>(null)
-const panel = ref<HTMLElement | null>(null)
+const trigger = ref(null)
+const panel = ref(null)
 const pos = ref({ top: 0, left: 0, maxHeight: 400 })
 
 function place() {
-  const el = trigger.value?.firstElementChild as HTMLElement | null
+  const el = trigger.value?.firstElementChild
   if (!el || !panel.value) return
   const r = el.getBoundingClientRect()
   const pw = panel.value.offsetWidth
@@ -34,8 +34,8 @@ function place() {
   pos.value = { top: Math.max(8, top), left, maxHeight: Math.max(160, Math.max(below, r.top - 14)) }
 }
 
-function items(): HTMLElement[] {
-  return panel.value ? [...panel.value.querySelectorAll<HTMLElement>('[role^="menuitem"], [data-menu-item]')] : []
+function items() {
+  return panel.value ? [...panel.value.querySelectorAll('[role^="menuitem"], [data-menu-item]')] : []
 }
 
 async function show() {
@@ -47,7 +47,7 @@ async function show() {
   document.addEventListener('pointerdown', onOutside, true)
   window.addEventListener('resize', onResize)
   window.addEventListener('scroll', onScroll, true)
-  const auto = panel.value?.querySelector<HTMLElement>('[data-autofocus]')
+  const auto = panel.value?.querySelector('[data-autofocus]')
   ;(auto ?? items()[0] ?? panel.value)?.focus({ preventScroll: true })
 }
 
@@ -58,7 +58,7 @@ function close(returnFocus = true) {
   document.removeEventListener('pointerdown', onOutside, true)
   window.removeEventListener('resize', onResize)
   window.removeEventListener('scroll', onScroll, true)
-  if (returnFocus === true) (trigger.value?.firstElementChild as HTMLElement | null)?.focus?.({ preventScroll: true })
+  if (returnFocus === true) trigger.value?.firstElementChild?.focus?.({ preventScroll: true })
 }
 
 function toggle() {
@@ -66,8 +66,8 @@ function toggle() {
   else void show()
 }
 
-function onOutside(e: PointerEvent) {
-  const t = e.target as Node
+function onOutside(e) {
+  const t = e.target
   if (panel.value?.contains(t) || trigger.value?.contains(t)) return
   close(false)
 }
@@ -76,12 +76,12 @@ function onResize() {
   close(false)
 }
 
-function onScroll(e: Event) {
-  if (panel.value && panel.value.contains(e.target as Node)) return
+function onScroll(e) {
+  if (panel.value && panel.value.contains(e.target)) return
   close(false)
 }
 
-function onKeydown(e: KeyboardEvent) {
+function onKeydown(e) {
   if (e.key === 'Escape') {
     e.preventDefault()
     e.stopPropagation()
@@ -92,7 +92,7 @@ function onKeydown(e: KeyboardEvent) {
   const list = items()
   if (!list.length) return
   e.preventDefault()
-  const i = list.indexOf(document.activeElement as HTMLElement)
+  const i = list.indexOf(document.activeElement)
   const next = e.key === 'ArrowDown' ? (i + 1) % list.length : (i - 1 + list.length) % list.length
   list[next].focus()
 }

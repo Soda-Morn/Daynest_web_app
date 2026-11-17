@@ -1,10 +1,9 @@
-<script setup lang="ts">
+<script setup>
 import { computed, ref, watch } from 'vue'
 import { AlignLeft, CalendarDays, Clock, Flag, FolderOpen, Repeat, Sparkles, X } from 'lucide-vue-next'
 import Modal from '@/components/ui/Modal.vue'
 import Dropdown from '@/components/ui/Dropdown.vue'
 import DateMenu from './DateMenu.vue'
-import type { Priority, TaskDraft } from '@/types/models'
 import { PRIORITIES } from '@/constants'
 import { useUiStore } from '@/stores/ui'
 import { useCollectionsStore } from '@/stores/collections'
@@ -26,8 +25,8 @@ const actions = useTaskActions()
 
 const text = ref('')
 const description = ref('')
-const descEl = ref<HTMLTextAreaElement | null>(null)
-const overrides = ref<Partial<TaskDraft>>({})
+const descEl = ref(null)
+const overrides = ref({})
 const defaults = computed(() => ui.quickAddDefaults)
 const keepOpen = ref(false)
 const { parsed, draft } = useQuickParse(text, defaults, overrides)
@@ -56,7 +55,7 @@ function autosize() {
 }
 
 /** Ctrl/Cmd + Enter saves from the description; plain Enter adds a new line. */
-function onDescKey(e: KeyboardEvent) {
+function onDescKey(e) {
   if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
     e.preventDefault()
     save()
@@ -73,7 +72,7 @@ const timeLabel = computed(() => {
 })
 const understood = computed(() => parsed.value.tokens.length > 0)
 
-function set<K extends keyof TaskDraft>(k: K, v: TaskDraft[K]) {
+function set(k, v) {
   overrides.value = { ...overrides.value, [k]: v }
 }
 
@@ -90,7 +89,11 @@ function save() {
   else ui.closeQuickAdd()
 }
 
-const examples = ['Finish payroll testing tomorrow at 3pm', 'Gym every weekday at 7am #fitness', 'Pay bills on the first day of every month !high']
+const examples = [
+  'Finish payroll testing tomorrow at 3pm',
+  'Gym every weekday at 7am #fitness',
+  'Pay bills on the first day of every month !high',
+]
 </script>
 
 <template>
@@ -148,10 +151,10 @@ const examples = ['Finish payroll testing tomorrow at 3pm', 'Gym every weekday a
           <template #default="{ close }">
             <div class="time-pop">
               <label class="field"><span class="field-label">Start</span>
-                <input class="input" type="time" :value="draft.startTime ?? ''" data-autofocus @change="set('startTime', ($event.target as HTMLInputElement).value || null)" />
+                <input class="input" type="time" :value="draft.startTime ?? ''" data-autofocus @change="set('startTime', ($event.target).value || null)" />
               </label>
               <label class="field"><span class="field-label">End</span>
-                <input class="input" type="time" :value="draft.endTime ?? ''" @change="set('endTime', ($event.target as HTMLInputElement).value || null)" />
+                <input class="input" type="time" :value="draft.endTime ?? ''" @change="set('endTime', ($event.target).value || null)" />
               </label>
               <div class="row">
                 <button type="button" class="btn btn-ghost btn-sm" @click="clearTime(); close()">All day</button>
@@ -175,7 +178,7 @@ const examples = ['Finish payroll testing tomorrow at 3pm', 'Gym every weekday a
               role="menuitemradio"
               :aria-checked="draft.priority === p.value"
               class="menu-item"
-              @click="set('priority', p.value as Priority); close()"
+              @click="set('priority', p.value); close()"
             >
               <Flag :class="`p-${p.value}`" />{{ p.label }}
             </button>

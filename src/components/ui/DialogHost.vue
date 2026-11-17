@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import Modal from './Modal.vue'
 import { activeDialog } from '@/composables/useDialogs'
 

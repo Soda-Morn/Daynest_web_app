@@ -1,12 +1,13 @@
-<script setup lang="ts">
+<script setup>
 import { ref } from 'vue'
 import { Plus, X } from 'lucide-vue-next'
-import type { Subtask } from '@/types/models'
 import TaskCheck from '@/components/ui/TaskCheck.vue'
 import { uid } from '@/utils/validation'
 
-const props = defineProps<{ modelValue: Subtask[] }>()
-const emit = defineEmits<{ 'update:modelValue': [Subtask[]] }>()
+const props = defineProps({
+  modelValue: { type: Array, required: true },
+})
+const emit = defineEmits(['update:modelValue'])
 const draft = ref('')
 
 function add() {
@@ -15,17 +16,27 @@ function add() {
   emit('update:modelValue', [...props.modelValue, { id: uid(), title, done: false }])
   draft.value = ''
 }
-function toggle(id: string) {
-  emit('update:modelValue', props.modelValue.map((s) => (s.id === id ? { ...s, done: !s.done } : s)))
+function toggle(id) {
+  emit(
+    'update:modelValue',
+    props.modelValue.map((s) => (s.id === id ? { ...s, done: !s.done } : s)),
+  )
 }
-function rename(id: string, title: string) {
+function rename(id, title) {
   const t = title.trim()
   if (!t) return remove(id)
   const cur = props.modelValue.find((s) => s.id === id)
-  if (cur && cur.title !== t) emit('update:modelValue', props.modelValue.map((s) => (s.id === id ? { ...s, title: t } : s)))
+  if (cur && cur.title !== t)
+    emit(
+      'update:modelValue',
+      props.modelValue.map((s) => (s.id === id ? { ...s, title: t } : s)),
+    )
 }
-function remove(id: string) {
-  emit('update:modelValue', props.modelValue.filter((s) => s.id !== id))
+function remove(id) {
+  emit(
+    'update:modelValue',
+    props.modelValue.filter((s) => s.id !== id),
+  )
 }
 </script>
 
@@ -38,8 +49,8 @@ function remove(id: string) {
         :value="s.title"
         :aria-label="`Subtask: ${s.title}`"
         maxlength="200"
-        @change="rename(s.id, ($event.target as HTMLInputElement).value)"
-        @keydown.enter="($event.target as HTMLInputElement).blur()"
+        @change="rename(s.id, ($event.target).value)"
+        @keydown.enter="($event.target).blur()"
       />
       <button type="button" class="icon-btn sm del" :aria-label="`Remove ${s.title}`" @click="remove(s.id)"><X /></button>
     </div>

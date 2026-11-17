@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { X } from 'lucide-vue-next'
 import { useIsMobile } from '@/composables/useMediaQuery'
@@ -7,33 +7,29 @@ import { useIsMobile } from '@/composables/useMediaQuery'
  * Accessible dialog. Centered card on desktop, bottom sheet on mobile
  * (swipe the handle down to dismiss). Traps focus and restores it on close.
  */
-const props = withDefaults(
-  defineProps<{
-    open: boolean
-    title?: string
-    size?: 'sm' | 'md' | 'lg'
-    hideHeader?: boolean
-    /** Align to top on desktop (command-palette style). */
-    top?: boolean
-  }>(),
-  { title: '', size: 'md', hideHeader: false, top: false },
-)
-const emit = defineEmits<{ close: [] }>()
+const props = defineProps({
+  open: { type: Boolean, required: true },
+  title: { type: String, default: '' },
+  size: { type: String, default: 'md' },
+  hideHeader: { type: Boolean, default: false },
+  top: { type: Boolean, default: false },
+})
+const emit = defineEmits(['close'])
 
 const isMobile = useIsMobile()
-const panel = ref<HTMLElement | null>(null)
+const panel = ref(null)
 const dragY = ref(0)
-let lastFocus: HTMLElement | null = null
+let lastFocus = null
 
 const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])'
 
-function onKeydown(e: KeyboardEvent) {
+function onKeydown(e) {
   if (!props.open) return
   if (e.key === 'Escape') {
     e.stopPropagation()
     emit('close')
   } else if (e.key === 'Tab' && panel.value) {
-    const els = [...panel.value.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((el) => el.offsetParent !== null)
+    const els = [...panel.value.querySelectorAll(FOCUSABLE)].filter((el) => el.offsetParent !== null)
     if (!els.length) return
     const first = els[0]
     const last = els[els.length - 1]
@@ -51,10 +47,10 @@ watch(
   () => props.open,
   async (open) => {
     if (open) {
-      lastFocus = document.activeElement as HTMLElement | null
+      lastFocus = document.activeElement
       document.addEventListener('keydown', onKeydown, true)
       await nextTick()
-      const auto = panel.value?.querySelector<HTMLElement>('[autofocus], [data-autofocus]')
+      const auto = panel.value?.querySelector('[autofocus], [data-autofocus]')
       ;(auto ?? panel.value)?.focus({ preventScroll: true })
     } else {
       document.removeEventListener('keydown', onKeydown, true)
@@ -68,12 +64,12 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown, true))
 
 /* Swipe-to-dismiss for the mobile sheet handle */
 let startY = 0
-function onHandleDown(e: PointerEvent) {
+function onHandleDown(e) {
   if (!isMobile.value) return
   startY = e.clientY
-  ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+  e.currentTarget.setPointerCapture(e.pointerId)
 }
-function onHandleMove(e: PointerEvent) {
+function onHandleMove(e) {
   if (!startY) return
   dragY.value = Math.max(0, e.clientY - startY)
 }

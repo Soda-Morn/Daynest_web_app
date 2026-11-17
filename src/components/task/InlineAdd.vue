@@ -1,7 +1,6 @@
-<script setup lang="ts">
+<script setup>
 import { computed, ref } from 'vue'
 import { Plus } from 'lucide-vue-next'
-import type { TaskDraft } from '@/types/models'
 import { useQuickParse } from '@/composables/useQuickParse'
 import { useTaskActions } from '@/composables/useTaskActions'
 import { useUiStore } from '@/stores/ui'
@@ -10,13 +9,13 @@ import { describeRecurrence } from '@/utils/recurrence'
 import { useSettingsStore } from '@/stores/settings'
 
 /** One-line "add task" input for list pages. Enter saves, text is parsed. */
-const props = withDefaults(defineProps<{ defaults?: Partial<TaskDraft>; placeholder?: string }>(), {
-  defaults: () => ({}),
-  placeholder: 'Add a task',
+const props = defineProps({
+  defaults: { type: Object, default: () => ({}) },
+  placeholder: { type: String, default: 'Add a task' },
 })
 const text = ref('')
 const defaults = computed(() => props.defaults)
-const overrides = ref<Partial<TaskDraft>>({})
+const overrides = ref({})
 const { draft, parsed } = useQuickParse(text, defaults, overrides)
 const actions = useTaskActions()
 const ui = useUiStore()
@@ -25,7 +24,7 @@ const settings = useSettingsStore()
 const preview = computed(() => {
   if (!parsed.value.tokens.length) return ''
   const d = draft.value
-  const parts: string[] = []
+  const parts = []
   if (d.startDate) parts.push(relativeDayLabel(d.startDate, ui.today))
   if (d.startTime) parts.push(formatTime(d.startTime, settings.settings.timeFormat))
   if (d.recurrence) parts.push(describeRecurrence(d.recurrence, d.startDate))

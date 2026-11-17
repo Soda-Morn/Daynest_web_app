@@ -1,7 +1,6 @@
-<script setup lang="ts">
+<script setup>
 import { computed, nextTick, onMounted, ref, shallowRef, watch } from 'vue'
 import { Check, Repeat } from 'lucide-vue-next'
-import type { DateKey, TaskInstance } from '@/types/models'
 import EventChip from './EventChip.vue'
 import { HOUR_HEIGHT, SNAP_MINUTES } from '@/constants'
 import { useTaskStore } from '@/stores/tasks'
@@ -20,16 +19,12 @@ import { isDone, isMultiDay } from '@/utils/task'
  * bottom edge to resize. All positions are computed from the shared
  * HOUR_HEIGHT so nothing is measured during render.
  */
-const props = withDefaults(
-  defineProps<{
-    days: DateKey[]
-    /** "cards": roomy pastel cards with descriptions (Day planner). */
-    variant?: 'grid' | 'cards'
-    hourHeight?: number
-  }>(),
-  { variant: 'grid', hourHeight: HOUR_HEIGHT },
-)
-const emit = defineEmits<{ openDay: [DateKey] }>()
+const props = defineProps({
+  days: { type: Array, required: true },
+  variant: { type: String, default: 'grid' },
+  hourHeight: { type: Number, default: HOUR_HEIGHT },
+})
+const emit = defineEmits(['openDay'])
 
 const store = useTaskStore()
 const collections = useCollectionsStore()
@@ -60,12 +55,12 @@ const expanded = ref(false)
 
 /** Timed single-day blocks per column. */
 const columns = computed(() => {
-  const byDay = new Map<DateKey, TaskInstance[]>()
+  const byDay = new Map()
   for (const i of instances.value) {
     if (!i.startTime || isMultiDay(i)) continue
-    const arr = byDay.get(i.startDate!) ?? []
+    const arr = byDay.get(i.startDate) ?? []
     arr.push(i)
-    byDay.set(i.startDate!, arr)
+    byDay.set(i.startDate, arr)
   }
   return props.days.map((d) => ({ date: d, blocks: layoutTimed(byDay.get(d) ?? []) }))
 })
@@ -74,7 +69,7 @@ const columns = computed(() => {
 const nowTop = computed(() => ((ui.now.getHours() * 60 + ui.now.getMinutes()) / 1440) * DAY_PX.value)
 
 /* ---- Initial scroll ---- */
-const scroller = ref<HTMLElement | null>(null)
+const scroller = ref(null)
 function scrollToWorkday() {
   const el = scroller.value
   if (!el) return
@@ -89,70 +84,83 @@ watch(
 )
 
 /* ---- Create by click / drag-select on empty space ---- */
-const selection = shallowRef<{ date: DateKey; a: number; b: number } | null>(null)
+const selection = shallowRef(null)
 
-function minutesAt(e: PointerEvent, col: HTMLElement) {
+function minutesAt(e, col) {
   const r = col.getBoundingClientRect()
   return Math.max(0, Math.min(1440, ((e.clientY - r.top) / r.height) * 1440))
 }
 
-function onColumnDown(e: PointerEvent, date: DateKey) {
-  if (e.button !== 0 || (e.target as HTMLElement).closest('.block')) return
-  const col = e.currentTarget as HTMLElement
+function onColumnDown(e, date) {
+  if (e.button !== 0 || e.target.closest('.block')) return
+  const col = e.currentTarget
   const start = Math.floor(minutesAt(e, col) / 30) * 30
   if (e.pointerType === 'touch') {
     // On touch, a tap creates (dragging must stay free for scrolling).
     const y0 = e.clientY
-    const up = (ev: PointerEvent) => {
+    const up = (ev) => {
       window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', cancel)
       if (Math.abs(ev.clientY - y0) < 8) create(date, start, start + 60)
     }
-    window.addEventListener('pointerup', up, { once: true })
+    const cancel = () => {
+      window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', cancel)
+    }
+    window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', cancel)
     return
   }
   selection.value = { date, a: start, b: start + 30 }
-  const move = (ev: PointerEvent) => {
+  const move = (ev) => {
     const m = Math.round(minutesAt(ev, col) / SNAP_MINUTES) * SNAP_MINUTES
     selection.value = { date, a: Math.min(start, m), b: Math.max(start + SNAP_MINUTES, m) }
   }
-  const up = () => {
+  const end = (ev) => {
     window.removeEventListener('pointermove', move)
-    window.removeEventListener('pointerup', up)
+    window.removeEventListener('pointerup', end)
+    window.removeEventListener('pointercancel', end)
     const s = selection.value
     selection.value = null
-    if (s) create(s.date, s.a, s.b - s.a < 30 ? s.a + 60 : s.b)
+    if (s && ev.type === 'pointerup') create(s.date, s.a, s.b - s.a < 30 ? s.a + 60 : s.b)
   }
   window.addEventListener('pointermove', move)
-  window.addEventListener('pointerup', up)
+  window.addEventListener('pointerup', end)
+  window.addEventListener('pointercancel', end)
 }
 
-function create(date: DateKey, a: number, b: number) {
+function create(date, a, b) {
   ui.selectedDate = date
   ui.openQuickAdd({ startDate: date, startTime: minutesToTime(a), endTime: minutesToTime(Math.min(b, 1439)) })
 }
 
 /* ---- Blocks ---- */
-function blockStyle(b: { start: number; end: number; column: number; columns: number }) {
+function blockStyle(b) {
   const top = (b.start / 1440) * DAY_PX.value
   const gap = cards.value ? 6 : 2
   const height = Math.max(cards.value ? 34 : 20, ((b.end - b.start) / 1440) * DAY_PX.value - gap)
   const w = 100 / b.columns
   const inset = cards.value ? 4 : 2
-  return { top: `${top + gap / 2}px`, height: `${height}px`, left: `calc(${b.column * w}% + ${inset}px)`, width: `calc(${w}% - ${inset * 2 + (cards.value ? 4 : 2)}px)` }
+  return {
+    top: `${top + gap / 2}px`,
+    height: `${height}px`,
+    left: `calc(${b.column * w}% + ${inset}px)`,
+    width: `calc(${w}% - ${inset * 2 + (cards.value ? 4 : 2)}px)`,
+  }
 }
 
-function onBlockDown(e: PointerEvent, inst: TaskInstance) {
+function onBlockDown(e, inst) {
   startTaskDrag(e, inst, actions.move)
 }
-function onResizeDown(e: PointerEvent, inst: TaskInstance) {
+function onResizeDown(e, inst) {
   startTaskDrag(e, inst, actions.move, 'resize')
 }
-function onBlockClick(inst: TaskInstance) {
+function onBlockClick(inst) {
   if (!wasDragging()) ui.openTask(inst)
 }
 
 /** How much fits in a card: title only, + time, + description. */
-function cardSize(b: { start: number; end: number }): 'xs' | 'sm' | 'lg' {
+function cardSize(b) {
   const px = ((b.end - b.start) / 1440) * DAY_PX.value
   return px < 52 ? 'xs' : px < 88 ? 'sm' : 'lg'
 }
@@ -169,9 +177,9 @@ const preview = computed(() => {
 })
 const draggingKey = computed(() => dragState.value?.inst.key ?? null)
 
-const blockTime = (i: TaskInstance) =>
-  i.endTime ? `${formatTime(i.startTime!, fmt.value)} – ${formatTime(i.endTime, fmt.value)}` : formatTime(i.startTime!, fmt.value)
-const colorOf = (i: TaskInstance) => collections.colorOf(i.task.calendarId)
+const blockTime = (i) =>
+  i.endTime ? `${formatTime(i.startTime, fmt.value)} – ${formatTime(i.endTime, fmt.value)}` : formatTime(i.startTime, fmt.value)
+const colorOf = (i) => collections.colorOf(i.task.calendarId)
 const isSingle = computed(() => props.days.length === 1)
 </script>
 
@@ -273,7 +281,7 @@ const isSingle = computed(() => props.days.length === 1)
             <div
               v-if="preview && preview.date === col.date"
               class="preview"
-              :style="{ top: (preview.start / 1440) * DAY_PX + 'px', height: Math.max(18, ((preview.end - preview.start) / 1440) * DAY_PX) + 'px', '--c': colorOf(dragState!.inst) }"
+              :style="{ top: (preview.start / 1440) * DAY_PX + 'px', height: Math.max(18, ((preview.end - preview.start) / 1440) * DAY_PX) + 'px', '--c': colorOf(dragState.inst) }"
             >
               {{ formatTime(minutesToTime(preview.start), fmt) }} – {{ formatTime(minutesToTime(Math.min(preview.end, 1439)), fmt) }}
             </div>

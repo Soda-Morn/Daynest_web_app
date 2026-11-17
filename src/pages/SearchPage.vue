@@ -1,17 +1,16 @@
-<script setup lang="ts">
+<script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Search } from 'lucide-vue-next'
 import FilterBar from '@/components/task/FilterBar.vue'
 import GroupedTaskList from '@/components/task/GroupedTaskList.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
-import type { TaskGroup } from '@/types/ui'
 import { useTaskStore } from '@/stores/tasks'
 import { useCollectionsStore } from '@/stores/collections'
 import { useUiStore } from '@/stores/ui'
 import { useIsMobile } from '@/composables/useMediaQuery'
 import { useDebounced } from '@/composables/useDebounced'
-import { emptyFilter, isFilterActive, makePredicate, type TaskFilter } from '@/utils/filters'
+import { emptyFilter, isFilterActive, makePredicate } from '@/utils/filters'
 import { compareByDate } from '@/utils/task'
 
 /**
@@ -28,8 +27,8 @@ const isMobile = useIsMobile()
 
 const input = ref(typeof route.query.q === 'string' ? route.query.q : '')
 const query = useDebounced(input, 120)
-const filter = ref<TaskFilter>(emptyFilter())
-const inputEl = ref<HTMLInputElement | null>(null)
+const filter = ref(emptyFilter())
+const inputEl = ref(null)
 
 watch(
   () => route.query.q,
@@ -41,8 +40,8 @@ watch(query, (q) => router.replace({ query: { ...route.query, q: q || undefined 
 onMounted(() => isMobile.value && inputEl.value?.focus())
 
 const names = {
-  calendar: (id: string) => collections.calendarById.get(id)?.name ?? '',
-  list: (id: string | null) => (id ? (collections.listById.get(id)?.name ?? '') : ''),
+  calendar: (id) => collections.calendarById.get(id)?.name ?? '',
+  list: (id) => (id ? (collections.listById.get(id)?.name ?? '') : ''),
 }
 
 const results = computed(() => {
@@ -51,7 +50,7 @@ const results = computed(() => {
   const pred = makePredicate(f, ui.today, names)
   return store.listInstances(ui.today).filter(pred).sort(compareByDate)
 })
-const groups = computed<TaskGroup[]>(() => [{ id: 'r', label: '', items: results.value }])
+const groups = computed(() => [{ id: 'r', label: '', items: results.value }])
 const active = computed(() => isFilterActive({ ...filter.value, query: query.value }))
 </script>
 
