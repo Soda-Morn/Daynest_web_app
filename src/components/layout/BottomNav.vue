@@ -8,9 +8,7 @@ const route = useRoute()
 
 /** Pre-fill the date the user is looking at. */
 function addTask() {
-  if (route.name === 'calendar') ui.openQuickAdd({ startDate: ui.selectedDate })
-  else if (route.name === 'today') ui.openQuickAdd({ startDate: ui.today })
-  else ui.openQuickAdd()
+  ui.openQuickAddFor(route.name)
 }
 const items = [
   { to: '/today', label: 'Today', icon: Sun },

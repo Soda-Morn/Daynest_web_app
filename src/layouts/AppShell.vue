@@ -54,7 +54,7 @@ watch(
   () => currentRoute.query.new,
   (n) => {
     if (n === undefined) return
-    ui.openQuickAdd(currentRoute.name === 'today' ? { startDate: ui.today } : {})
+    ui.openQuickAddFor(currentRoute.name)
     const { new: _drop, ...rest } = currentRoute.query
     void router.replace({ query: rest })
   },

@@ -92,7 +92,16 @@ export class SyncEngine {
     })
     const onOnline = () => void this.pullQuietly(0)
     const onOffline = () => this.setStatus({ state: 'offline' })
-    const onVisible = () => document.visibilityState === 'visible' && this.pullQuietly(0)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') this.pullQuietly(0)
+      // Leaving the app (often for good on a phone): send pending edits now,
+      // not after the usual delay, which a frozen background page never reaches.
+      else
+        void persistence
+          .flush()
+          .then(() => this.push())
+          .catch(() => {})
+    }
     window.addEventListener('online', onOnline)
     window.addEventListener('offline', onOffline)
     document.addEventListener('visibilitychange', onVisible)

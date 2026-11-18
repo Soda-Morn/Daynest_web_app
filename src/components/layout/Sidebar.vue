@@ -2,7 +2,7 @@
 import { computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMediaQuery } from '@/composables/useMediaQuery'
-import { CalendarDays, CalendarRange, CircleCheckBig, Download, ListTodo, PanelLeftClose, PanelLeftOpen, Plus, Sun } from 'lucide-vue-next'
+import { CalendarDays, CalendarRange, CircleCheckBig, Download, ListTodo, PanelLeftClose, PanelLeftOpen, Sun } from 'lucide-vue-next'
 import CollectionsPanel from './CollectionsPanel.vue'
 import DaynestLogo from '@/components/brand/DaynestLogo.vue'
 import SyncStatus from './SyncStatus.vue'
@@ -91,10 +91,6 @@ const nav = computed(() => [
       </button>
     </div>
 
-    <button type="button" class="btn btn-primary new" :aria-label="collapsed ? 'New task' : undefined" title="New task (N)" @click="ui.openQuickAdd()">
-      <Plus /><span class="lbl">New task</span>
-    </button>
-
     <ul class="nav">
       <li v-for="n in nav" :key="n.to">
         <RouterLink :to="n.to" class="nav-link" :title="collapsed ? n.label : undefined">
@@ -164,8 +160,6 @@ const nav = computed(() => [
 .brand-logo { flex: 1; min-width: 0; white-space: nowrap; }
 .collapsed .brand { flex-direction: column; height: auto; gap: var(--space-2); padding-left: 0; }
 .collapsed .brand-logo { flex: none; }
-.new { justify-content: flex-start; height: 40px; padding: 0 12px; }
-.collapsed .new { justify-content: center; padding: 0; }
 .collapsed .lbl, .collapsed .badge { display: none; }
 .nav { display: grid; gap: 2px; }
 .nav-link {

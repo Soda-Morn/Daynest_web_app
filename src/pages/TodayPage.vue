@@ -13,7 +13,7 @@ import { useStats } from '@/composables/useStats'
 import { useReorder } from '@/composables/useReorder'
 import { useToast } from '@/composables/useToast'
 import { formatDate } from '@/utils/date'
-import { compareByOrder } from '@/utils/task'
+import { compareByOrder, isDone } from '@/utils/task'
 
 const store = useTaskStore()
 const ui = useUiStore()
@@ -32,8 +32,21 @@ const motivation = computed(() => {
   return MOTIVATION[n % MOTIVATION.length]
 })
 
-/** Everything on today's date (across all calendars), manual order. */
-const todayItems = computed(() => [...(store.dayMap(ui.today, ui.today).get(ui.today) ?? [])].sort(compareByOrder))
+/**
+ * Everything on today's date (across all calendars): open tasks first, timed
+ * tasks in clock order, then tasks without a time in the user's manual order.
+ */
+function compareByTime(a, b) {
+  const da = isDone(a.status) ? 1 : 0
+  const db = isDone(b.status) ? 1 : 0
+  if (da !== db) return da - db
+  if (a.startTime && b.startTime) {
+    if (a.startTime !== b.startTime) return a.startTime < b.startTime ? -1 : 1
+    if ((a.endTime ?? '') !== (b.endTime ?? '')) return (a.endTime ?? '') < (b.endTime ?? '') ? -1 : 1
+  } else if (!!a.startTime !== !!b.startTime) return a.startTime ? -1 : 1
+  return compareByOrder(a, b)
+}
+const todayItems = computed(() => [...(store.dayMap(ui.today, ui.today).get(ui.today) ?? [])].sort(compareByTime))
 
 const overdue = computed(() => store.overdueInstances(ui.today))
 
@@ -114,13 +127,15 @@ const maxBar = computed(() => Math.max(1, ...stats.week.value.counts))
           <h2 class="b-title">Today</h2>
           <span class="count">{{ todayItems.length }}</span>
         </div>
+        <InlineAdd class="add-top" :defaults="addDefaults" placeholder="Add a task for today — try “Call mom at 6pm”" />
         <TransitionGroup tag="div" name="list" class="list">
+          <!-- Timed tasks follow the clock; only tasks without a time can be dragged into order. -->
           <TaskItem
             v-for="i in ordered"
             :key="i.key"
             :inst="i"
             :show-date="false"
-            reorderable
+            :reorderable="!i.startTime"
             :dragging="dragKey === i.key"
             @grab="(e) => grab(e, i.key)"
             @nudge="(d) => nudge(i.key, d)"
@@ -136,7 +151,6 @@ const maxBar = computed(() => Math.max(1, ...stats.week.value.counts))
           </div>
         </Transition>
         <EmptyState v-if="!todayItems.length" mood="happy" title="Your day is wide open" text="Add something you would like to get done today." />
-        <InlineAdd :defaults="addDefaults" placeholder="Add a task for today — try “Call mom at 6pm”" />
       </section>
 
       <section class="block" aria-label="This week">
@@ -208,6 +222,7 @@ const maxBar = computed(() => Math.max(1, ...stats.week.value.counts))
 .block-head .btn, .block-head .streak { margin-left: auto; align-self: center; }
 .count { font-size: var(--text-sm); color: var(--text-3); }
 .list { position: relative; display: grid; }
+.add-top { margin-top: 0; margin-bottom: var(--space-1); }
 .see-all { font-size: var(--text-sm); color: var(--primary-text); padding: var(--space-2) var(--space-4); }
 .week-body { display: grid; gap: var(--space-4); padding: var(--space-4) var(--space-5) var(--space-5); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }
 .streak { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--accent-text); }

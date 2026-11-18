@@ -39,6 +39,16 @@ export const useUiStore = defineStore('ui', () => {
     quickAddDefaults.value = defaults
     quickAddOpen.value = true
   }
+  /**
+   * Opens Quick Add pre-filled with the date the user is looking at, so a task
+   * added from Today lands on Today (not in "No date"). One rule for every
+   * add button and shortcut.
+   */
+  function openQuickAddFor(routeName) {
+    if (routeName === 'calendar') openQuickAdd({ startDate: selectedDate.value })
+    else if (routeName === 'today') openQuickAdd({ startDate: today.value })
+    else openQuickAdd()
+  }
   function closeQuickAdd() {
     quickAddOpen.value = false
   }
@@ -60,6 +70,7 @@ export const useUiStore = defineStore('ui', () => {
     quickAddOpen,
     quickAddDefaults,
     openQuickAdd,
+    openQuickAddFor,
     closeQuickAdd,
     settingsOpen,
     mobileSidebarOpen,

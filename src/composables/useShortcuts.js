@@ -19,7 +19,7 @@ export function useShortcuts(focusSearch) {
     const k = e.key.toLowerCase()
     const views = { m: 'month', w: 'week', d: 'day', a: 'agenda' }
 
-    if (k === 'n' || k === 'q') ui.openQuickAdd(onCal ? { startDate: ui.selectedDate } : {})
+    if (k === 'n' || k === 'q') ui.openQuickAddFor(route.name)
     else if (k === '/') focusSearch()
     else if (k === 't') {
       ui.selectedDate = ui.today

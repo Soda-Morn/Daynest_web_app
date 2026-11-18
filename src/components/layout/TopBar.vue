@@ -170,7 +170,7 @@ defineExpose({ focusSearch: () => (compact.value ? router.push({ name: 'search' 
       </div>
       <RouterLink v-else-if="route.name !== 'search'" :to="{ name: 'search' }" class="icon-btn" aria-label="Search"><Search /></RouterLink>
 
-      <button v-if="!isMobile" type="button" class="btn btn-primary btn-sm add" title="Quick add (N)" :aria-label="compact ? 'Add task' : undefined" @click="ui.openQuickAdd()"><Plus /><span v-if="!compact">Add</span></button>
+      <button v-if="!isMobile" type="button" class="btn btn-primary btn-sm add" title="Quick add (N)" :aria-label="compact ? 'Add task' : undefined" @click="ui.openQuickAddFor(route.name)"><Plus /><span v-if="!compact">Add</span></button>
       <button v-if="!isMobile" type="button" class="icon-btn" aria-label="Settings" title="Settings" @click="ui.settingsOpen = true"><Settings /></button>
       <button type="button" class="avatar" :aria-label="`Profile${settings.settings.userName ? ': ' + settings.settings.userName : ''}`" :title="cloudEnabled ? 'Account' : 'Profile & settings'" @click="openProfile">
         <img v-if="auth.profile?.avatarUrl" :src="auth.profile.avatarUrl" alt="" class="avatar-img" />

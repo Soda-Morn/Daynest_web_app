@@ -4,19 +4,23 @@ import {
   AlignLeft,
   Bell,
   CalendarDays,
+  ChevronDown,
   CircleDot,
   Clock,
   Copy,
+  Ellipsis,
   Flag,
   FolderOpen,
   ListChecks,
   Palette,
   Repeat,
+  SlidersHorizontal,
   Trash2,
   X,
 } from 'lucide-vue-next'
 import { PRIORITIES, REMINDER_OPTIONS, STATUSES } from '@/constants'
 import Segmented from '@/components/ui/Segmented.vue'
+import Dropdown from '@/components/ui/Dropdown.vue'
 import TaskCheck from '@/components/ui/TaskCheck.vue'
 import DateMenu from './DateMenu.vue'
 import RecurrenceEditor from './RecurrenceEditor.vue'
@@ -25,9 +29,11 @@ import NotesEditor from './NotesEditor.vue'
 import { useUiStore } from '@/stores/ui'
 import { useTaskStore } from '@/stores/tasks'
 import { useCollectionsStore } from '@/stores/collections'
+import { useSettingsStore } from '@/stores/settings'
 import { useTaskActions } from '@/composables/useTaskActions'
 import { useToast } from '@/composables/useToast'
-import { addDays, diffDays, formatDate, relativeDayLabel } from '@/utils/date'
+import { addDays, diffDays, formatDate, formatTime, relativeDayLabel } from '@/utils/date'
+import { describeRecurrence } from '@/utils/recurrence'
 import { isOverdue } from '@/utils/task'
 
 /**
@@ -165,6 +171,59 @@ const updated = computed(() =>
   inst.value ? new Date(inst.value.task.updatedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '',
 )
 
+/* ---- Clean layout: title, subtasks and notes up front; the rest folds away ---- */
+const settings = useSettingsStore()
+const DETAILS_KEY = 'daynest:detail-expanded'
+const readExpanded = () => {
+  try {
+    return localStorage.getItem(DETAILS_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+const showDetails = ref(readExpanded())
+function toggleDetails(force) {
+  showDetails.value = typeof force === 'boolean' ? force : !showDetails.value
+  try {
+    localStorage.setItem(DETAILS_KEY, showDetails.value ? '1' : '0')
+  } catch {
+    /* private mode: just don't remember it */
+  }
+}
+
+/** Header date chip, e.g. "Nov 18, Today · 12pm – 1pm". */
+const dateLabel = computed(() => {
+  const i = inst.value
+  if (!i?.startDate) return 'No date'
+  const rel = relativeDayLabel(i.startDate, ui.today)
+  const abs = formatDate(i.startDate, { month: 'short', day: 'numeric' })
+  return rel === abs ? abs : `${abs}, ${rel}`
+})
+const timeLabel = computed(() => {
+  const i = inst.value
+  if (!i?.startTime) return ''
+  const f = settings.settings.timeFormat
+  return i.endTime ? `${formatTime(i.startTime, f)} – ${formatTime(i.endTime, f)}` : formatTime(i.startTime, f)
+})
+
+/** Read-only summary of the folded fields; tapping it opens them. Only shows what is set. */
+const summary = computed(() => {
+  const i = inst.value
+  if (!i) return []
+  const out = []
+  if (i.task.recurrence) out.push({ key: 'repeat', icon: Repeat, text: describeRecurrence(i.task.recurrence, i.startDate) })
+  if (i.priority !== 'medium') out.push({ key: 'prio', icon: Flag, text: PRIORITIES.find((p) => p.value === i.priority)?.label, cls: `p-${i.priority}` })
+  if (i.status !== 'todo' && i.status !== 'completed') out.push({ key: 'status', icon: CircleDot, text: STATUSES.find((s) => s.value === i.status)?.label })
+  const list = i.task.listId ? collections.listById.get(i.task.listId) : null
+  if (list) out.push({ key: 'list', icon: FolderOpen, text: list.name })
+  if (i.startTime && i.task.reminders.length) out.push({ key: 'rem', icon: Bell, text: i.task.reminders.length === 1 ? reminderLabel(i.task.reminders[0]) : `${i.task.reminders.length} reminders` })
+  return out
+})
+const subtaskProgress = computed(() => {
+  const s = inst.value?.subtasks ?? []
+  return s.length ? `${s.filter((x) => x.done).length}/${s.length}` : ''
+})
+
 const scopeOptions = [
   { value: 'this', label: 'This' },
   { value: 'future', label: 'Following' },
@@ -187,10 +246,27 @@ function onPanelKey(e) {
   <div v-if="inst" class="detail" @keydown="onPanelKey">
         <header class="head">
           <TaskCheck :checked="inst.status === 'completed'" :priority="inst.priority" :label="`Complete ${inst.title}`" @toggle="actions.toggleComplete(inst)" />
-          <span class="crumb"><span class="dot" :style="{ '--c': cal?.color }" />{{ cal?.name }}</span>
+          <span class="head-sep" aria-hidden="true" />
+          <DateMenu :model-value="inst.startDate" :allow-clear="!inst.occurrence" @pick="setDate">
+            <template #default="{ toggle }">
+              <button type="button" class="date-chip" :class="{ late: isOverdue(inst, ui.today), empty: !inst.startDate }" aria-label="Change date" @click="toggle">
+                <CalendarDays />
+                <span>{{ dateLabel }}</span>
+                <span v-if="timeLabel" class="date-time">{{ timeLabel }}</span>
+              </button>
+            </template>
+          </DateMenu>
           <span class="spacer" />
-          <button type="button" class="icon-btn sm" aria-label="Duplicate" title="Duplicate" @click="actions.duplicate(inst)"><Copy /></button>
-          <button type="button" class="icon-btn sm" aria-label="Delete" title="Delete" @click="actions.remove(inst)"><Trash2 /></button>
+          <Dropdown placement="bottom-end" :width="190" label="Task actions">
+            <template #trigger="{ toggle }">
+              <button type="button" class="icon-btn sm" aria-label="More actions" title="More" @click="toggle"><Ellipsis /></button>
+            </template>
+            <template #default="{ close: closeMenu }">
+              <button type="button" role="menuitem" class="menu-item" @click="toggleDetails(true); closeMenu()"><SlidersHorizontal />Show details</button>
+              <button type="button" role="menuitem" class="menu-item" @click="actions.duplicate(inst); closeMenu()"><Copy />Duplicate</button>
+              <button type="button" role="menuitem" class="menu-item danger" @click="closeMenu(); actions.remove(inst)"><Trash2 />Delete</button>
+            </template>
+          </Dropdown>
           <button type="button" class="icon-btn sm" aria-label="Close details" title="Close" @click="close"><X /></button>
         </header>
 
@@ -218,7 +294,14 @@ function onPanelKey(e) {
             <Segmented v-model="scope" :options="scopeOptions" label="Apply edits to" />
           </div>
 
-          <dl class="props">
+          <!-- Calendar + whatever else is set, at a glance. Tap to edit. -->
+          <button type="button" class="meta" :aria-expanded="showDetails" aria-controls="task-props" @click="toggleDetails()">
+            <span class="meta-chip"><span class="dot" :style="{ '--c': cal?.color }" />{{ cal?.name }}</span>
+            <span v-for="s in summary" :key="s.key" class="meta-chip" :class="s.cls"><component :is="s.icon" />{{ s.text }}</span>
+            <span class="meta-more">{{ showDetails ? 'Less' : 'Details' }}<ChevronDown :class="{ up: showDetails }" /></span>
+          </button>
+
+          <dl v-show="showDetails" id="task-props" class="props">
             <div class="prop">
               <dt><CalendarDays class="ico" />Date</dt>
               <dd class="row">
@@ -324,7 +407,7 @@ function onPanelKey(e) {
           </dl>
 
           <section class="block">
-            <h3 class="section-title"><ListChecks class="ico" />Subtasks</h3>
+            <h3 class="section-title"><ListChecks class="ico" />Subtasks<span v-if="subtaskProgress" class="sub-count">{{ subtaskProgress }}</span></h3>
             <SubtaskList :model-value="inst.subtasks" @update:model-value="(s) => apply({ subtasks: s })" />
           </section>
 
@@ -333,17 +416,51 @@ function onPanelKey(e) {
             <NotesEditor :model-value="inst.description" :task-key="inst.key" @save="saveDescription" />
           </section>
 
-          <p class="stamps">Created {{ created }} · Updated {{ updated }}</p>
+          <p v-if="showDetails" class="stamps">Created {{ created }} · Updated {{ updated }}</p>
         </div>
   </div>
 </template>
 
 <style scoped>
 .detail { display: flex; flex-direction: column; min-height: 0; height: 100%; }
-.head { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-3) var(--space-2) var(--space-5); }
-.crumb { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--text-3); margin-left: var(--space-2); }
+.head {
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--border);
+}
+.head-sep { width: 1px; height: 18px; background: var(--border-strong); margin: 0 2px; }
+.date-chip {
+  display: inline-flex; align-items: center; gap: 6px; min-width: 0; height: 30px; padding: 0 8px;
+  border: 0; border-radius: var(--radius-sm); background: none;
+  color: var(--primary-text); font-size: var(--text-sm); font-weight: var(--weight-medium); white-space: nowrap;
+}
+.date-chip:hover { background: var(--surface-hover); }
+.date-chip svg { width: 16px; height: 16px; flex-shrink: 0; }
+.date-chip.late { color: var(--overdue); }
+.date-chip.empty { color: var(--text-3); font-weight: var(--weight-regular); }
+.date-time { color: var(--text-3); font-weight: var(--weight-regular); overflow: hidden; text-overflow: ellipsis; }
 .spacer { flex: 1; }
-.scroll { flex: 1; overflow-y: auto; padding: 0 var(--space-5) var(--space-6); overscroll-behavior: contain; }
+
+/* Summary line under the title */
+.meta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px; width: 100%;
+  margin: 0 0 var(--space-2); padding: 4px 0; border: 0; background: none; text-align: left;
+}
+.meta-chip {
+  display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 8px;
+  border-radius: var(--radius-full); background: var(--surface-sunken);
+  font-size: var(--text-xs); color: var(--text-2); white-space: nowrap;
+}
+.meta-chip svg { width: 12px; height: 12px; }
+.meta-chip .dot { width: 7px; height: 7px; }
+.meta-chip.p-low svg, .meta-chip.p-medium svg, .meta-chip.p-high svg, .meta-chip.p-urgent svg { color: var(--pc); fill: var(--pc); }
+.meta-more { display: inline-flex; align-items: center; gap: 2px; margin-left: auto; font-size: var(--text-xs); color: var(--text-3); }
+.meta:hover .meta-more { color: var(--text); }
+.meta-more svg { width: 14px; height: 14px; transition: transform var(--dur-fast) var(--ease); }
+.meta-more svg.up { transform: rotate(180deg); }
+.props { padding: var(--space-2) 0; border-bottom: 1px solid var(--border); }
+.sub-count { margin-left: auto; font-size: var(--text-xs); color: var(--text-3); font-weight: var(--weight-regular); letter-spacing: 0; text-transform: none; }
+.scroll { flex: 1; overflow-y: auto; padding: var(--space-2) var(--space-5) var(--space-6); overscroll-behavior: contain; }
 .title {
   width: 100%;
   border: 0;
@@ -400,7 +517,20 @@ dd { margin: 0; min-width: 0; }
 .x:hover { background: var(--surface-hover); color: var(--text); }
 .x svg { width: 12px; height: 12px; }
 .add-rem { width: auto; flex: 1; min-width: 160px; }
-.block { margin-top: var(--space-5); display: grid; gap: var(--space-2); }
+.block { margin-top: var(--space-4); display: grid; gap: var(--space-2); }
+
+/* Phones: roomier tap targets, title a touch smaller. */
+@media (pointer: coarse) {
+  .date-chip { height: 36px; }
+  .meta-chip { height: 28px; font-size: var(--text-sm); }
+}
+@media (max-width: 767px) {
+  .head { padding-left: var(--space-4); }
+  .scroll { padding: var(--space-2) var(--space-4) var(--space-6); }
+  .title { font-size: var(--text-lg); }
+  .prop { grid-template-columns: 92px 1fr; }
+  .time { width: 120px; }
+}
 .block .section-title { display: flex; align-items: center; gap: 6px; }
 .stamps { margin-top: var(--space-5); font-size: var(--text-xs); color: var(--text-3); }
 

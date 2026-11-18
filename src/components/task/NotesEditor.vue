@@ -1,7 +1,8 @@
 <script setup>
-import { computed, h, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, h, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { Bold, Code, Heading2, Italic, Link, List, ListOrdered, ListTodo, PencilLine, Strikethrough, TextQuote } from 'lucide-vue-next'
 import { continueList, insertLink, parseNotes, toggleCheckLine, toggleLinePrefix, toggleWrap } from '@/utils/notes'
+import { persistence } from '@/services/persistence'
 
 /**
  * Task notes with light formatting. Shows the formatted notes; tap to edit
@@ -24,14 +25,25 @@ const root = ref(null)
 const ta = ref(null)
 const editing = ref(false)
 const draft = ref(props.modelValue)
+/**
+ * The stored notes this editor last saw or saved. Only text that differs
+ * from it is the user's own typing — an editor left open (e.g. on a desktop
+ * overnight) must never write its old text over notes saved meanwhile on
+ * another device.
+ */
+let lastSaved = props.modelValue
 let timer = null
 
 /* ---------------- Saving ---------------- */
 
-function save(key = props.taskKey, base = props.modelValue) {
+const hasUnsaved = () => draft.value !== lastSaved
+
+function save(key = props.taskKey) {
   clearTimeout(timer)
   timer = null
-  if (draft.value !== base) emit('save', draft.value, key)
+  if (!hasUnsaved()) return
+  lastSaved = draft.value
+  emit('save', draft.value, key)
 }
 
 watch(draft, () => {
@@ -40,11 +52,13 @@ watch(draft, () => {
   timer = setTimeout(save, SAVE_DELAY)
 })
 
-// Stored notes changed (other window, undo, sync): show them unless mid-edit.
+// Stored notes changed (other device, other window, undo): show them —
+// even mid-edit, as long as nothing new was typed here.
 watch(
   () => props.modelValue,
   (v) => {
-    if (!editing.value) draft.value = v
+    if (!editing.value || !hasUnsaved()) draft.value = v
+    lastSaved = v
   },
 )
 
@@ -52,14 +66,33 @@ watch(
 watch(
   () => props.taskKey,
   (_key, oldKey) => {
-    if (timer) save(oldKey)
+    save(oldKey)
     editing.value = false
     draft.value = props.modelValue
+    lastSaved = props.modelValue
   },
 )
 
+/**
+ * Phones freeze a page moments after it goes to the background, before the
+ * debounce fires. Save right away when the app is hidden or closed, and
+ * write it to the device at once.
+ */
+function saveNow() {
+  if (!hasUnsaved()) return
+  save()
+  void persistence.flush()
+}
+const onVisibility = () => document.visibilityState === 'hidden' && saveNow()
+onMounted(() => {
+  document.addEventListener('visibilitychange', onVisibility)
+  window.addEventListener('pagehide', saveNow)
+})
+
 onBeforeUnmount(() => {
-  if (timer || editing.value) save()
+  document.removeEventListener('visibilitychange', onVisibility)
+  window.removeEventListener('pagehide', saveNow)
+  save()
 })
 
 /* ---------------- Edit mode ---------------- */
@@ -67,6 +100,7 @@ onBeforeUnmount(() => {
 async function startEdit() {
   if (editing.value) return
   draft.value = props.modelValue
+  lastSaved = props.modelValue
   editing.value = true
   await nextTick()
   const el = ta.value
