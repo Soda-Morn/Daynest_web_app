@@ -40,6 +40,19 @@ export function initPwa() {
     installEvent.value = null
   })
 
+  // After a deploy the old hashed chunks are gone from the server, so an
+  // old page opening a not-yet-loaded route fails to import it. Reload once
+  // to get the new version instead of showing a broken screen.
+  window.addEventListener('vite:preloadError', (e) => {
+    const KEY = 'daynest:chunk-reload'
+    let last = 0
+    try { last = Number(sessionStorage.getItem(KEY)) || 0 } catch {}
+    if (Date.now() - last < 10_000) return // already tried: avoid a reload loop
+    e.preventDefault()
+    try { sessionStorage.setItem(KEY, String(Date.now())) } catch {}
+    window.location.reload()
+  })
+
   // The service worker is production-only: in development it would cache
   // modules and fight with hot reloading.
   if (import.meta.env.PROD && swSupported()) void register()
@@ -63,10 +76,22 @@ async function register() {
   watch(registration.installing)
   registration.addEventListener('updatefound', () => watch(registration.installing))
 
-  // Leaving the app (switching apps, locking the phone) is a safe moment to
-  // update: the user comes back to the new version without noticing.
+  // Coming back to the app is treated like a fresh launch: phones rarely
+  // close installed apps, so "resume" is the moment users expect the new
+  // version. Leaving the app is tried too, but the OS often freezes the
+  // page before that finishes, so resume is the reliable path.
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden' && updateReady.value) void autoApply()
+    if (document.visibilityState === 'visible') {
+      resumedAt = Date.now()
+      if (updateReady.value) void autoApply()
+    } else if (updateReady.value) void autoApply()
+  })
+  // bfcache restores (iOS standalone apps) don't always fire visibilitychange.
+  window.addEventListener('pageshow', (e) => {
+    if (!e.persisted) return
+    resumedAt = Date.now()
+    check()
+    if (updateReady.value) void autoApply()
   })
 
   // Reload only for an update the user accepted — not when the very first
@@ -78,30 +103,37 @@ async function register() {
   })
 
   // Look for new versions when the app comes back into view, and hourly.
-  const check = () => registration?.update().catch(() => {})
   document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && check())
   setInterval(check, 60 * 60 * 1000)
 }
 
+const check = () => registration?.update().catch(() => {})
+
 /**
  * Installed apps on phones are rarely fully closed, so a waiting update
  * would otherwise never activate. Apply it automatically when it is safe:
- *  - just after the app opened (the user hasn't started working yet), or
+ *  - shortly after the app was opened OR brought back to the foreground
+ *    (the user hasn't started working yet; downloading the new version can
+ *    take a while on mobile, hence the generous window), or
  *  - when the app goes to the background,
  * and only if nothing is being typed and every change is saved.
  * Otherwise the "new version is ready → Reload" toast stays as before.
  */
-const STARTUP_WINDOW_MS = 15_000
-const startedAt = Date.now()
+const RESUME_WINDOW_MS = 60_000
+let resumedAt = Date.now()
 
 function onUpdateReady() {
   updateReady.value = true
-  if (Date.now() - startedAt < STARTUP_WINDOW_MS || document.visibilityState === 'hidden') void autoApply()
+  if (Date.now() - resumedAt < RESUME_WINDOW_MS || document.visibilityState === 'hidden') void autoApply()
 }
 
+/** True only when the user is actually typing something (an autofocused empty field doesn't count). */
 function isEditing() {
   const el = document.activeElement
-  return !!el && (el.tagName === 'TEXTAREA' || el.isContentEditable || (el.tagName === 'INPUT' && !['checkbox', 'radio', 'button'].includes(el.type)))
+  if (!el) return false
+  if (el.isContentEditable) return (el.textContent ?? '').trim() !== ''
+  const typing = el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && !['checkbox', 'radio', 'button', 'submit', 'reset'].includes(el.type))
+  return typing && String(el.value ?? '') !== ''
 }
 
 async function autoApply() {
