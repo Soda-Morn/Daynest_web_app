@@ -108,7 +108,7 @@ async function startEdit() {
   autosize()
   el.focus({ preventScroll: true })
   el.setSelectionRange(el.value.length, el.value.length)
-  el.scrollIntoView({ block: 'nearest' })
+  el.scrollIntoView({ block: 'nearest', inline: 'nearest' })
 }
 
 function finish() {
@@ -355,7 +355,7 @@ function onViewKey(e) {
 </template>
 
 <style scoped>
-.notes { position: relative; }
+.notes { position: relative; min-width: 0; max-width: 100%; }
 
 /* ---------- Editing ---------- */
 .notes.editing {

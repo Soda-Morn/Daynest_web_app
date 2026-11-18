@@ -460,7 +460,8 @@ function onPanelKey(e) {
 .meta-more svg.up { transform: rotate(180deg); }
 .props { padding: var(--space-2) 0; border-bottom: 1px solid var(--border); }
 .sub-count { margin-left: auto; font-size: var(--text-xs); color: var(--text-3); font-weight: var(--weight-regular); letter-spacing: 0; text-transform: none; }
-.scroll { flex: 1; overflow-y: auto; padding: var(--space-2) var(--space-5) var(--space-6); overscroll-behavior: contain; }
+.scroll { flex: 1; overflow-x: hidden; overflow-y: auto; padding: var(--space-2) var(--space-5) var(--space-6); overscroll-behavior: contain; }
+.detail, .scroll { min-width: 0; }
 .title {
   width: 100%;
   border: 0;
@@ -517,7 +518,9 @@ dd { margin: 0; min-width: 0; }
 .x:hover { background: var(--surface-hover); color: var(--text); }
 .x svg { width: 12px; height: 12px; }
 .add-rem { width: auto; flex: 1; min-width: 160px; }
-.block { margin-top: var(--space-4); display: grid; gap: var(--space-2); }
+/* minmax(0, 1fr): a wide child (the notes toolbar on phones) scrolls inside
+   its own box instead of stretching the panel past the screen edge. */
+.block { margin-top: var(--space-4); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); }
 
 /* Phones: roomier tap targets, title a touch smaller. */
 @media (pointer: coarse) {
